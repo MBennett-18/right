@@ -1,0 +1,65 @@
+0$            CREATE,        10000::NEXT(1$);
+
+1$            ASSIGN:        aTimeIn=TNOW:
+                             aUtility=1:
+                             aTotalUtility=0:
+                             aCost=0:
+                             aTotalCost=0:
+                             aAge=75:
+                             aFemale=1;
+2$            ASSIGN:        aDeathTimeLP=1:
+                             aDeathTimeShape=TF(tMortalityShape,ANINT(aAge)+1+(aFemale==2)*109):
+                             aDeathTimeScale=TF(tMortalityScale,ANINT(aAge)+1+(aFemale==2)*109):
+                             aAgeAtDeath=
+                             aAge + MIN((aDeathTimeScale-LN(aDeathTimeLP)) * ( - LN(1-UNIF(0,1)))**(1/aDeathTimeShape),110-aAge):
+                             aDeathTime=(aAgeAtDeath-aAge)*365;
+16$           BRANCH,        1:
+                             If,vTx==1,17$,Yes:
+                             Else,3$,Yes;
+17$           ASSIGN:        aLP_Event=LN(vRREvent_Tx):
+                             aRandUnif=UNIF(0,1):
+                             aTimeToEvent=(LN(aRandUnif)*vTimeDurTimeToEvent)/(LN(1-vPrEvent)*EP(aLP_Event));
+4$            ASSIGN:        aNextEvent=MIN(aDeathTime,aTimeToEvent);
+5$            DELAY:         aNextEvent,,Other:NEXT(6$);
+
+6$            ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+7$            BRANCH,        1:
+                             If,aNextEvent==aDeathTime,8$,Yes:
+                             Else,15$,Yes;
+8$            ASSIGN:        aTimeIn=TNOW;
+13$           ROUTE:         0.0,s2SecularDeath;
+
+15$           COUNT:         cExperiencedEvent,1;
+9$            ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aUtility=MAX(0,aUtility-vDisutility_Event):
+                             aTotalCost=aTotalCost + (vCostEvent / ((1+eDailyDiscountRate)**eTimeElapsed)):
+                             aTimeIn=TNOW;
+10$           ASSIGN:        aNextEvent=aDeathTime;
+11$           DELAY:         aNextEvent,,Other:NEXT(12$);
+
+12$           ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+14$           ROUTE:         0.0,s2SecularDeath;
+
+3$            ASSIGN:        aLP_Event=LN(vRREvent):
+                             aRandUnif=UNIF(0,1):
+                             aTimeToEvent=(LN(aRandUnif)*vTimeDurTimeToEvent)/(LN(1-vPrEvent)*EP(aLP_Event)):NEXT(4$);
+
+
+18$           STATION,       s2SecularDeath;
+19$           COUNT:         cSecularDeath,1;
+20$           ROUTE:         0.0,sDispose;
+
+
+22$           STATION,       sDispose;
+23$           TALLY:         tAvgQALY,(aTotalUtility)/365.25,1;
+25$           TALLY:         tAvgCost,aTotalCost,1;
+24$           COUNT:         cTotalUtility,aTotalUtility*100/(365.25*100);
+26$           COUNT:         cTotalCost,aTotalCost;
+27$           TALLY:         tLifeExpectancy,aAgeAtDeath,1;
+28$           TALLY:         tAvgAgeAtDeath,aAge,1;
+21$           DISPOSE:       No;
+
