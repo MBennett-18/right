@@ -15,28 +15,61 @@ shinyServer(function(input, output)
     fluidRow(
       "Life Expectancy : ",
       strong("75"),
-      tags$small("(72,78)")
+      tags$small("(72-78)")
     )
   })
   
-  output$qualAdjLifeExpect <- renderUI({
+  output$qualAdjLifeExpectNoTX <- renderUI({
     fluidRow(
-      "Quality Adjusted Life Expectancy : ",
+      "Quality Adjusted Life Exp : ",
       strong("72"),
-      tags$small("(70, 74)")
+      tags$small("(70-74)")
     )
   })
   
-  output$totalCosts <- renderUI({
+  output$totalCostsNoTX <- renderUI({
     fluidRow(
       "Total Costs : $",
-      strong("43,482")
+      strong("43,482"),
+      tags$small("($41,200-$45,432)")
     )
   })
   
-  output$costEffectiveRatio <- renderUI({
+  output$costEffectiveRatioNoTX <- renderUI({
     fluidRow(
       "Cost Effectiveness Ratio : ",
+      strong("0.92"),
+      tags$small("(0.90-0.94)")
+    )
+  })
+  
+  output$qualAdjLifeExpectTX <- renderUI({
+    fluidRow(
+      "Quality Adjusted Life Exp : ",
+      strong("72"),
+      tags$small("(70-74)")
+    )
+  })
+  
+  output$totalCostsTX <- renderUI({
+    fluidRow(
+      "Total Costs : $",
+      strong("43,482"),
+      tags$small("($41,200-$45,432)")
+    )
+  })
+  
+  output$costEffectiveRatioTX <- renderUI({
+    fluidRow(
+      "Cost Effectiveness Ratio : ",
+      strong("0.92"),
+      tags$small("(0.90, 0.94)")
+    )
+  })
+  
+  output$ICER <- renderUI({
+    fluidRow(
+      "ICER : ",
       strong("0.92"),
       tags$small("(0.90, 0.94)")
     )

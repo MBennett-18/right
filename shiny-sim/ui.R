@@ -6,17 +6,21 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
         submitButton("Run Simulation"),
-        checkboxInput("vPGx", "Perform Prospective Genotypic Testing", 1),
-        checkboxInput("vTx",  "Prescribe Treatment", 1),
+        selectInput("vPGx", "Testing Method",
+                    c("Proscriptive", "Reactive"), "Proscriptive", FALSE),
         selectInput("vSecondLine", "Second Line Drug",
                     c("Atorvastin", "Rosuvastatin", "Low/Mod Dose Statin"), "Low/Mod Dose Statin", FALSE),
         wellPanel(
+          h3("Probabilities"),
+          sliderInput("vDiscRate", "Discontinuation Rate", min=0.0, max=1.0, value=0.03, step=0.01)
+        ),
+        wellPanel(
           h3("Costs in Dollars"),
           sliderInput("vCostPGx",   "Genotyping (one time)", min=10, max=750, value=250, step=1),
-          sliderInput("vCostDrug1", "Simvastatin (yearly)", min=1.0, max=2000, value=147, step=0.1),
-          sliderInput("vCostDrug2", "Atorvastin (yearly)", min=1.0, max=2000, value=173.1, step=0.1),
-          sliderInput("vCostDrug3", "Rosuvastatin (yearly)", min=1.0, max=2000, value=259.2, step=0.1),
-          sliderInput("vCostDrug4", "Low/Mod Dose Statin (yearly)", min=1.0, max=2000, value=143.7, step=0.1)
+          sliderInput("vCostDrug1", "Simvastatin (yearly)", min=0.0, max=2000, value=147, step=0.1),
+          sliderInput("vCostDrug2", "Atorvastin (yearly)", min=0.0, max=2000, value=173.1, step=0.1),
+          sliderInput("vCostDrug3", "Rosuvastatin (yearly)", min=0.0, max=2000, value=259.2, step=0.1),
+          sliderInput("vCostDrug4", "Low/Mod Dose Statin (yearly)", min=0.0, max=2000, value=143.7, step=0.1)
         ),
         wellPanel(
           h3("Population"),
@@ -31,9 +35,21 @@ shinyUI(fluidPage(
       plotOutput("lifeHist"),
       
       h3("Costs"),
-      htmlOutput("qualAdjLifeExpect"),
-      htmlOutput("costEffectiveRatio"),
-      htmlOutput("totalCosts"),
+      splitLayout(
+        fluidPage(
+          h4("No Testing"),
+          htmlOutput("qualAdjLifeExpectNoTX"),
+          htmlOutput("costEffectiveRatioNoTX"),
+          htmlOutput("totalCostsNoTX")
+        ),
+        fluidPage(
+          h4("Genotyping"),
+          htmlOutput("qualAdjLifeExpectTX"),
+          htmlOutput("costEffectiveRatioTX"),
+          htmlOutput("totalCostsTX"),
+          htmlOutput("ICER")
+        )
+      ),
       
       h3("Counts"),
       htmlOutput("deathCVD"),
