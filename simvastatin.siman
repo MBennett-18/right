@@ -1,0 +1,426 @@
+5$            CREATE,        14000::NEXT(0$);
+
+0$            ASSIGN:        aUtility=1:
+                             aTotalUtility=0:
+                             aCost=0:
+                             aTotalCost=0:
+                             aTimeIn=TNOW:
+                             aGenotype=DISC(0.730,1,0.979,2,1,3):
+                             aAge=vAge:
+                             aTx=vTx:
+                             aFemale=DISC(0.5,1,1,2):
+                             aTxDuration=730:NEXT(8$);
+
+8$            ASSIGN:        aDeathTimeLP=1:
+                             aDeathTimeShape=TF(tMortalityShape,ANINT(aAge)+1+(aFemale==2)*109):
+                             aDeathTimeScale=TF(tMortalityScale,ANINT(aAge)+1+(aFemale==2)*109):
+                             aAgeAtDeath=
+                             aAge + MIN((aDeathTimeScale-LN(aDeathTimeLP)) * ( - LN(1-UNIF(0,1)))**(1/aDeathTimeShape),110-aAge):
+                             aDeathTime=(aAgeAtDeath-aAge)*365;
+9$            TALLY:         tDeathTime,aDeathTime/365,1:NEXT(35$);
+
+35$           ASSIGN:        aDrug=1:NEXT(38$);
+
+38$           BRANCH,        1:
+                             If,aDrug==1,39$,Yes:
+                             If,aDrug==2,40$,Yes:
+                             If,aDrug==3,41$,Yes:
+                             If,aDrug==4,42$,Yes:
+                             If,aTx==2,43$,Yes;
+39$           ASSIGN:        aCost=aCost+eDailyCostDrug1:NEXT(29$);
+
+40$           ASSIGN:        aCost=aCost+eDailyCostDrug2:NEXT(29$);
+
+41$           ASSIGN:        aCost=aCost+eDailyCostDrug3:NEXT(29$);
+
+42$           ASSIGN:        aCost=aCost+eDailyCostDrug4:NEXT(29$);
+
+43$           ASSIGN:        aCost=0:NEXT(29$);
+
+29$           BRANCH,        1:
+                             If,vPGx==1,33$,Yes:
+                             Else,34$,Yes;
+33$           ASSIGN:        aPGx=1;
+37$           ASSIGN:        aTotalCost=aTotalCost+vCostPGx;
+30$           BRANCH,        1:
+                             If,vPGx_Provider == 1,31$,Yes:
+                             Else,10$,Yes;
+31$           BRANCH,        1:
+                             If,aGenotype==3,32$,Yes:
+                             If,aGenotype==2,32$,Yes:
+                             Else,10$,Yes;
+32$           ASSIGN:        aDrug=vSecondLine:NEXT(44$);
+
+44$           BRANCH,        1:
+                             If,aDrug==1,45$,Yes:
+                             If,aDrug==2,46$,Yes:
+                             If,aDrug==3,47$,Yes:
+                             If,aDrug==4,48$,Yes:
+                             If,aTx==2,49$,Yes;
+45$           ASSIGN:        aCost=aCost+eDailyCostDrug1:NEXT(36$);
+
+46$           ASSIGN:        aCost=aCost+eDailyCostDrug2:NEXT(36$);
+
+47$           ASSIGN:        aCost=aCost+eDailyCostDrug3:NEXT(36$);
+
+48$           ASSIGN:        aCost=aCost+eDailyCostDrug4:NEXT(36$);
+
+49$           ASSIGN:        aCost=0:NEXT(36$);
+
+36$           COUNT:         cSwitched,1:NEXT(10$);
+
+34$           ASSIGN:        aPGx=2:NEXT(10$);
+
+10$           BRANCH,        1:
+                             If,aTx==1,11$,Yes:
+                             Else,Assign Mild_OFF,Yes;
+11$           BRANCH,        1:
+                             If,aDrug==1,Assign Mild_Simvastatin,Yes:
+                             If,aDrug==2,Assign Mild_Atorvastatin,Yes:
+                             If,aDrug==3,Assign Mild_Rosuvastatin,Yes:
+                             If,aDrug==4,Assign Mild_LowDose,Yes;
+Assign Mild_Simvastatin ASSIGN: aLP_Myo_Mild=LN(vRRmyopathy_Mild(aGenotype)):
+                             aTimetoMyopathy_Mild=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Mild)/(LN(1-vProbMyopathy_Mild)*EP(aLP_Myo_Mild));
+Assign Moderate_Simvastatin ASSIGN: aLP_Myo_Mod=LN(vRRmyopathy_Mod_Drug1(aGenotype)):
+                             aTimetoMyopathy_Mod=(LN(UNIF(0,1))*vTimeDurMyopathy_Mod)/(LN(1-vProbMyopathy_Mod)*EP(aLP_Myo_Mod));
+Assign Severe_Simvastatin ASSIGN: aLP_Myo_Sev=LN(vRRmyopathy_Sev_Drug1(aGenotype)):
+                             aTimetoMyopathy_Sev=(LN(UNIF(0,1))*vTimeDurMyopathy_Sev)/(LN(1-vProbMyopathy_Sev)*EP(aLP_Myo_Sev));
+12$           BRANCH,        1:
+                             If,aTimetoMyopathy_Mild >365,13$,Yes:
+                             Else,14$,Yes;
+13$           ASSIGN:        aTimetoMyopathy_Mild=9999999999;
+14$           BRANCH,        1:
+                             If,aTimetoMyopathy_Mod >365,15$,Yes:
+                             Else,16$,Yes;
+15$           ASSIGN:        aTimetoMyopathy_Mod=9999999999;
+16$           BRANCH,        1:
+                             If,aTimetoMyopathy_Sev >365,17$,Yes:
+                             Else,56$,Yes;
+17$           ASSIGN:        aTimetoMyopathy_Sev=9999999999:NEXT(56$);
+
+Assign Mild_Atorvastatin ASSIGN: aLP_Myo_Mild=LN(vRRmyopathy_Mild(aGenotype)):
+                             aTimetoMyopathy_Mild=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Mild)/(LN(1-vProbMyopathy_Mild)*EP(aLP_Myo_Mild));
+Assign Moderate_Atorvastatin ASSIGN: aLP_Myo_Mod=LN(vRRmyopathy_Mod_Drug2(aGenotype)):
+                             aTimetoMyopathy_Mod=(LN(UNIF(0,1))*vTimeDurMyopathy_Mod)/(LN(1-vProbMyopathy_Mod)*EP(aLP_Myo_Mod));
+Assign Severe_Atorvastatin ASSIGN: aLP_Myo_Sev=LN(vRRmyopathy_Sev_Drug2(aGenotype)):
+                             aTimetoMyopathy_Sev=(LN(UNIF(0,1))*vTimeDurMyopathy_Sev)/(LN(1-vProbMyopathy_Sev)*EP(aLP_Myo_Sev))
+                             :NEXT(12$);
+
+Assign Mild_Rosuvastatin ASSIGN: aLP_Myo_Mild=LN(vRRmyopathy_Mild(aGenotype)):
+                             aTimetoMyopathy_Mild=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Mild)/(LN(1-vProbMyopathy_Mild)*EP(aLP_Myo_Mild));
+Assign Moderate_Rosuvastatin ASSIGN: aLP_Myo_Mod=LN(vRRmyopathy_Mod_Drug3(aGenotype)):
+                             aTimetoMyopathy_Mod=(LN(UNIF(0,1))*vTimeDurMyopathy_Mod)/(LN(1-vProbMyopathy_Mod)*EP(aLP_Myo_Mod));
+Assign Severe_Rosuvastatin ASSIGN: aLP_Myo_Sev=LN(vRRmyopathy_Sev_Drug3(aGenotype)):
+                             aTimetoMyopathy_Sev=(LN(UNIF(0,1))*vTimeDurMyopathy_Sev)/(LN(1-vProbMyopathy_Sev)*EP(aLP_Myo_Sev))
+                             :NEXT(12$);
+
+Assign Mild_LowDose ASSIGN:  aLP_Myo_Mild=LN(vRRmyopathy_Mild(aGenotype)):
+                             aTimetoMyopathy_Mild=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Mild)/(LN(1-vProbMyopathy_Mild)*EP(aLP_Myo_Mild));
+Assign Moderate_LowDose ASSIGN: aLP_Myo_Mod=LN(vRRmyopathy_Mod_Drug4(aGenotype)):
+                             aTimetoMyopathy_Mod=(LN(UNIF(0,1))*vTimeDurMyopathy_Mod)/(LN(1-vProbMyopathy_Mod)*EP(aLP_Myo_Mod));
+Assign Severe_LowDose ASSIGN: aLP_Myo_Sev=LN(vRRmyopathy_Sev_Drug4(aGenotype)):
+                             aTimetoMyopathy_Sev=(LN(UNIF(0,1))*vTimeDurMyopathy_Sev)/(LN(1-vProbMyopathy_Sev)*EP(aLP_Myo_Sev))
+                             :NEXT(12$);
+
+Assign Mild_OFF ASSIGN:      aLP_Myo_Mild=LN(vRRmyopathy_Mild(aGenotype)):
+                             aTimetoMyopathy_Mild=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Mild)/(LN(1-vProbMyopathy_Mild_OFF)*EP(aLP_Myo_Mild));
+Assign Moderate_OFF ASSIGN:  aLP_Myo_Mod=LN(vRRmyopathy_Mod_OFF(aGenotype)):
+                             aTimetoMyopathy_Mod=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Mod)/(LN(1-vProbMyopathy_Mod_OFF)*EP(aLP_Myo_Mod));
+Assign Severe_OFF ASSIGN:    aLP_Myo_Sev=LN(vRRmyopathy_Sev_OFF(aGenotype)):
+                             aTimetoMyopathy_Sev=
+                             (LN(UNIF(0,1))*vTimeDurMyopathy_Sev)/(LN(1-vProbMyopathy_Sev_OFF)*EP(aLP_Myo_Sev)):NEXT(12$);
+
+56$           BRANCH,        1:
+                             If,aAge <= 40,57$,Yes:
+                             If,(aAge>40)&&(aAge<=45),58$,Yes:
+                             If,(aAge>45)&&(aAge<=50),59$,Yes:
+                             If,(aAge>50)&&(aAge<=55),60$,Yes:
+                             If,(aAge>55)&&(aAge<=60),61$,Yes:
+                             If,(aAge>60)&&(aAge<=65),63$,Yes:
+                             If,(aAge>65)&&(aAge<=70),64$,Yes:
+                             If,(aAge>70)&&(aAge<=75),65$,Yes:
+                             Else,62$,Yes;
+57$           ASSIGN:        aAgeBracket=1:NEXT(50$);
+
+58$           ASSIGN:        aAgeBracket=2:NEXT(50$);
+
+59$           ASSIGN:        aAgeBracket=3:NEXT(50$);
+
+60$           ASSIGN:        aAgeBracket=4:NEXT(50$);
+
+61$           ASSIGN:        aAgeBracket=5:NEXT(50$);
+
+63$           ASSIGN:        aAgeBracket=7:NEXT(50$);
+
+64$           ASSIGN:        aAgeBracket=8:NEXT(50$);
+
+65$           ASSIGN:        aAgeBracket=9:NEXT(50$);
+
+62$           ASSIGN:        aAgeBracket=6:NEXT(50$);
+
+50$           BRANCH,        1:
+                             If,aTx == 1,53$,Yes:
+                             Else,52$,Yes;
+53$           BRANCH,        1:
+                             If,aDrug==4,55$,Yes:
+                             Else,51$,Yes;
+55$           COUNT:         cDrug4,1;
+54$           BRANCH,        1:
+                             If,aFemale == 1,Assign CVD Female Low,Yes:
+                             Else,Assign CVD Male Low,Yes;
+Assign CVD Female Low ASSIGN: aLP_CVD_LowDose=LN(vRR_CVD_LowDose):
+                             aTimetoCVD=(LN(UNIF(0,1))*vTimeDurCVD)/(LN(1-vProbCVD_Female(aAgeBracket))*EP(aLP_CVD_LowDose))
+                             :NEXT(1$);
+
+Assign CVD Male Low ASSIGN:  aLP_CVD_LowDose=LN(vRR_CVD_LowDose):
+                             aTimetoCVD=(LN(UNIF(0,1))*vTimeDurCVD)/(LN(1-vProbCVD_Male(aAgeBracket))*EP(aLP_CVD_LowDose))
+                             :NEXT(1$);
+
+51$           BRANCH,        1:
+                             If,aFemale == 1,Assign CVD Female High,Yes:
+                             Else,Assign CVD Male High,Yes;
+Assign CVD Female High ASSIGN: aLP_CVD_HighDose=LN(vRR_CVD_HighDose):
+                             aTimetoCVD=(LN(UNIF(0,1))*vTimeDurCVD)/(LN(1-vProbCVD_Female(aAgeBracket))*EP(aLP_CVD_HighDose))
+                             :NEXT(1$);
+
+Assign CVD Male High ASSIGN: aLP_CVD_HighDose=LN(vRR_CVD_HighDose):
+                             aTimetoCVD=(LN(UNIF(0,1))*vTimeDurCVD)/(LN(1-vProbCVD_Male(aAgeBracket))*EP(aLP_CVD_HighDose))
+                             :NEXT(1$);
+
+52$           BRANCH,        1:
+                             If,aFemale == 1,Assign CVD Female OFF,Yes:
+                             Else,Assign CVD Male OFF,Yes;
+Assign CVD Female OFF ASSIGN: aLP_CVD=LN(vRR_CVD):
+                             aTimetoCVD=(LN(UNIF(0,1))*vTimeDurCVD)/(LN(1-vProbCVD_Female(aAgeBracket))*EP(aLP_CVD)):NEXT(1$);
+
+Assign CVD Male OFF ASSIGN:  aLP_CVD=LN(vRR_CVD):
+                             aTimetoCVD=(LN(UNIF(0,1))*vTimeDurCVD)/(LN(1-vProbCVD_Male(aAgeBracket))*EP(aLP_CVD)):NEXT(1$);
+
+1$            ASSIGN:        aNextEvent=
+                             MIN(aDeathTime,aTimetoMyopathy_Mild, aTimetoMyopathy_Mod, aTimetoMyopathy_Sev,aTimetoCVD);
+2$            DELAY:         aNextEvent,,Other:NEXT(6$);
+
+6$            ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+3$            BRANCH,        1:
+                             If,aNextEvent==aDeathTime,4$,Yes:
+                             If,aNextEvent==aTimetoMyopathy_Mild,66$,Yes:
+                             If,aNextEvent==aTimetoMyopathy_Mod,93$,Yes:
+                             If,aNextEvent==aTimetoMyopathy_Sev,120$,Yes:
+                             If,aNextEvent==aTimetoCVD,135$,Yes;
+4$            ASSIGN:        aTimeIn=TNOW;
+7$            ROUTE:         0.0,s2SecularDeath;
+
+66$           COUNT:         cMildMyopathy,1;
+67$           ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aUtilityTemp=aUtility:
+                             aUtility=MAX(0,aUtility-vDisutility_MildMyo):
+                             aTotalCost=aTotalCost + (vCostMildMyo / ((1+eDailyDiscountRate)**eTimeElapsed)):
+                             aTimeIn=TNOW:
+                             aAge=aAge+eTimeElapsed/365.25:NEXT(75$);
+
+75$           ASSIGN:        aNextEvent=MIN(aDeathTime,vDisutilityMildMyo_Dur);
+69$           DELAY:         aNextEvent,,Other:NEXT(70$);
+
+70$           ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+71$           BRANCH,        1:
+                             If,aNextEvent==aDeathTime,73$,Yes:
+                             Else,74$,Yes;
+73$           ASSIGN:        aTimeIn=TNOW;
+72$           ROUTE:         0.0,s2SecularDeath;
+
+74$           ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aTimeIn=TNOW:NEXT(76$);
+
+76$           ASSIGN:        aNextStep=DISC(0.591,1,0.821,2,1,3);
+77$           BRANCH,        1:
+                             If,aNextStep==1,82$,Yes:
+                             If,aNextStep==2,78$,Yes:
+                             Else,79$,Yes;
+82$           BRANCH,        1:
+                             If,aDrug==1,83$,Yes:
+                             If,aDrug==2,85$,Yes:
+                             If,aDrug==3,85$,Yes:
+                             Else,84$,Yes;
+83$           ASSIGN:        aDrug=vSecondLine;
+86$           COUNT:         cSwitched,1:NEXT(87$);
+
+87$           BRANCH,        1:
+                             If,aDrug==1,88$,Yes:
+                             If,aDrug==2,89$,Yes:
+                             If,aDrug==3,90$,Yes:
+                             If,aDrug==4,91$,Yes:
+                             If,aTx==2,92$,Yes;
+88$           ASSIGN:        aCost=aCost+eDailyCostDrug1:NEXT(68$);
+
+89$           ASSIGN:        aCost=aCost+eDailyCostDrug2:NEXT(68$);
+
+90$           ASSIGN:        aCost=aCost+eDailyCostDrug3:NEXT(68$);
+
+91$           ASSIGN:        aCost=aCost+eDailyCostDrug4:NEXT(68$);
+
+92$           ASSIGN:        aCost=0:NEXT(68$);
+
+85$           ASSIGN:        aDrug=4:NEXT(86$);
+
+84$           ASSIGN:        aTx=2;
+80$           COUNT:         cStopped,1:NEXT(87$);
+
+78$           ASSIGN:        aTx=2:NEXT(80$);
+
+79$           ASSIGN:        aDrug=4;
+81$           COUNT:         cSwitched,1:NEXT(87$);
+
+68$           ASSIGN:        aUtility=aUtilityTemp:NEXT(10$);
+
+93$           COUNT:         cModMyopathy,1;
+94$           ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aUtilityTemp=aUtility:
+                             aUtility=MAX(0,aUtility-vDisutility_ModMyo):
+                             aTotalCost=aTotalCost + (vCostModMyo / ((1+eDailyDiscountRate)**eTimeElapsed)):
+                             aTimeIn=TNOW:
+                             aAge=aAge+eTimeElapsed/365.25:NEXT(119$);
+
+119$          ASSIGN:        aNextEvent=MIN(aDeathTime,vDisutilityModMyo_Dur);
+113$          DELAY:         aNextEvent,,Other:NEXT(114$);
+
+114$          ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+115$          BRANCH,        1:
+                             If,aNextEvent==aDeathTime,117$,Yes:
+                             Else,118$,Yes;
+117$          ASSIGN:        aTimeIn=TNOW;
+116$          ROUTE:         0.0,s2SecularDeath;
+
+118$          ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aTimeIn=TNOW:NEXT(96$);
+
+96$           ASSIGN:        aNextStep=DISC(0.591,1,0.821,2,1,3);
+97$           BRANCH,        1:
+                             If,aNextStep==1,102$,Yes:
+                             If,aNextStep==2,98$,Yes:
+                             Else,99$,Yes;
+102$          BRANCH,        1:
+                             If,aDrug==1,103$,Yes:
+                             If,aDrug==2,105$,Yes:
+                             If,aDrug==3,105$,Yes:
+                             Else,104$,Yes;
+103$          ASSIGN:        aDrug=vSecondLine;
+106$          COUNT:         cSwitched,1:NEXT(107$);
+
+107$          BRANCH,        1:
+                             If,aDrug==1,108$,Yes:
+                             If,aDrug==2,109$,Yes:
+                             If,aDrug==3,110$,Yes:
+                             If,aDrug==4,111$,Yes:
+                             If,aTx==2,112$,Yes;
+108$          ASSIGN:        aCost=aCost+eDailyCostDrug1:NEXT(95$);
+
+109$          ASSIGN:        aCost=aCost+eDailyCostDrug2:NEXT(95$);
+
+110$          ASSIGN:        aCost=aCost+eDailyCostDrug3:NEXT(95$);
+
+111$          ASSIGN:        aCost=aCost+eDailyCostDrug4:NEXT(95$);
+
+112$          ASSIGN:        aCost=0:NEXT(95$);
+
+105$          ASSIGN:        aDrug=4:NEXT(106$);
+
+104$          ASSIGN:        aTx=2;
+100$          COUNT:         cStopped,1:NEXT(107$);
+
+98$           ASSIGN:        aTx=2:NEXT(100$);
+
+99$           ASSIGN:        aDrug=4;
+101$          COUNT:         cSwitched,1:NEXT(107$);
+
+95$           ASSIGN:        aUtility=aUtilityTemp:NEXT(10$);
+
+120$          COUNT:         cSevMyopathy,1;
+121$          ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aUtilityTemp=aUtility:
+                             aUtility=MAX(0,aUtility-vDisutility_SevMyo):
+                             aTotalCost=aTotalCost + (vCostSevMyo / ((1+eDailyDiscountRate)**eTimeElapsed)):
+                             aTimeIn=TNOW:
+                             aAge=aAge+eTimeElapsed/365.25;
+122$          ASSIGN:        aTx=2:
+                             aCost=0;
+126$          COUNT:         cStopped,1;
+123$          BRANCH,        1:
+                             If,UNIF(0,1) <= vProbCF,124$,Yes:
+                             Else,134$,Yes;
+124$          COUNT:         cDeathRhabdo,1;
+125$          ROUTE:         0.0,sDispose;
+
+134$          ASSIGN:        aNextEvent=MIN(aDeathTime,vDisutilitySevMyo_Dur);
+128$          DELAY:         aNextEvent,,Other:NEXT(129$);
+
+129$          ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+130$          BRANCH,        1:
+                             If,aNextEvent==aDeathTime,132$,Yes:
+                             Else,133$,Yes;
+132$          ASSIGN:        aTimeIn=TNOW;
+131$          ROUTE:         0.0,s2SecularDeath;
+
+133$          ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aTimeIn=TNOW:NEXT(127$);
+
+127$          ASSIGN:        aUtility=aUtilityTemp:NEXT(10$);
+
+135$          COUNT:         cCVD,1;
+136$          ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aUtility=MAX(0,aUtility-vDisutility_CVD):
+                             aTotalCost=aTotalCost + (vCostCVD / ((1+eDailyDiscountRate)**eTimeElapsed)):
+                             aTimeIn=TNOW:
+                             aAge=aAge+eTimeElapsed/365.25;
+140$          TALLY:         tTimetoCVD,aAge,1;
+137$          BRANCH,        1:
+                             If,UNIF(0,1) <= vProbCVD_Death,138$,Yes:
+                             Else,149$,Yes;
+138$          COUNT:         cDeathCVD,1;
+141$          TALLY:         tTimeCVDDeath,aAge,1;
+139$          ROUTE:         0.0,sDispose;
+
+149$          ASSIGN:        aNextEvent=MIN(aDeathTime,vDisutilityCVD_Dur);
+143$          DELAY:         aNextEvent,,Other:NEXT(144$);
+
+144$          ASSIGN:        aTotalUtility=aTotalUtility+eDiscountedUtility:
+                             aTotalCost=aTotalCost+eDiscountedCost:
+                             aAge=aAge+eTimeElapsed/365.25;                     Update
+145$          BRANCH,        1:
+                             If,aNextEvent==aDeathTime,147$,Yes:
+                             Else,148$,Yes;
+147$          ASSIGN:        aTimeIn=TNOW;
+146$          ROUTE:         0.0,s2SecularDeath;
+
+148$          ASSIGN:        aDeathTime=aDeathTime - (eTimeElapsed):
+                             aTimeIn=TNOW:NEXT(142$);
+
+142$          ASSIGN:        aUtility=aUtilityTemp:NEXT(56$);
+
+
+18$           STATION,       s2SecularDeath;
+19$           COUNT:         cDiedNaturalCauses,1;
+20$           ROUTE:         0.0,sDispose;
+
+
+22$           STATION,       sDispose;
+23$           TALLY:         tAvgQALY,(aTotalUtility)/365.25,1;
+25$           TALLY:         tAvgCost,aTotalCost,1;
+24$           COUNT:         cTotalUtility,aTotalUtility*100/(365.25*100);
+26$           COUNT:         cTotalCost,aTotalCost;
+27$           TALLY:         tLifeExpectancy,aAgeAtDeath,1;
+28$           TALLY:         tAvgAgeAtDeath,aAge,1;
+21$           DISPOSE:       No;
