@@ -43,7 +43,7 @@ shinyUI(fluidPage(
           htmlOutput("totalCostsNoTX")
         ),
         fluidPage(
-          h4("Genotyping"),
+          h4("With Genotyping"),
           htmlOutput("qualAdjLifeExpectTX"),
           htmlOutput("costEffectiveRatioTX"),
           htmlOutput("totalCostsTX"),
@@ -52,19 +52,31 @@ shinyUI(fluidPage(
       ),
       
       h3("Counts"),
-      htmlOutput("deathCVD"),
-      htmlOutput("stoppedTreat"),
-      htmlOutput("switchTreat"),
-      htmlOutput("mldMyo"),
-      htmlOutput("modMyo"),
-      htmlOutput("sevMyo"),
+      splitLayout(
+        fluidPage(
+          h4("No Testing"),
+          htmlOutput("deathCVDNoTX"),
+          htmlOutput("mldMyoNoTX"),
+          htmlOutput("modMyoNoTX"),
+          htmlOutput("sevMyoNoTX")
+        ),
+        fluidPage(
+          h4("With Genotyping"),
+          htmlOutput("deathCVDTX"),
+          htmlOutput("mldMyoTX"),
+          htmlOutput("modMyoTX"),
+          htmlOutput("sevMyoTX"),
+          htmlOutput("stoppedTreatTX"),
+          htmlOutput("switchTreatTX")        )
+      ),
+
       
       h3("Simulation Method"),
       img(src="SimvastatinMethod.png", width="60%")
     )
   ),
   p("Built using ",
-        a(href="https://www.r-project.org/", "R"),
+        a(href="https://www.r-project.org/", img(src="Rlogo.png", alt="R", width="60")),
         "with the ",
         a(href="https://cran.r-project.org/web/packages/simmer/index.html", "simmer"),
         " and ",

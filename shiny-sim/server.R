@@ -63,7 +63,7 @@ shinyServer(function(input, output)
     fluidRow(
       "Cost Effectiveness Ratio : ",
       strong("0.92"),
-      tags$small("(0.90, 0.94)")
+      tags$small("(0.90-0.94)")
     )
   })
   
@@ -71,49 +71,79 @@ shinyServer(function(input, output)
     fluidRow(
       "ICER : ",
       strong("0.92"),
-      tags$small("(0.90, 0.94)")
+      tags$small("(0.90-0.94)")
     )
   })
   
-  output$stoppedTreat <- renderUI({
+  # Counts
+  output$deathCVDTX <- renderUI({
     fluidRow(
       "Deaths by a Cardiovascular Event : ",
       strong("161")
     )
   })
   
-  output$stoppedTreat <- renderUI({
+  output$stoppedTreatTX <- renderUI({
     fluidRow(
       "Stopped Treatement : ",
       strong("72")
     )
   })
   
-  output$switchTreat <- renderUI({
+  output$switchTreatTX <- renderUI({
     fluidRow(
       "Switched Treatment : ",
       strong("4000")
     )
   })
   
-  output$mldMyo <- renderUI({
+  output$mldMyoTX <- renderUI({
     fluidRow(
       "Mild Myopathies : ",
       strong("140")
     )
   })
 
-  output$modMyo <- renderUI({
+  output$modMyoTX <- renderUI({
     fluidRow(
       "Moderate Myopathies : ",
       strong("3")
     )
   })
   
-  output$sevMyo <- renderUI({
+  output$sevMyoTX <- renderUI({
     fluidRow(
       "Severe Myopathies : ",
       strong("1")
+    )
+  })
+  
+  
+  output$deathCVDNoTX <- renderUI({
+    fluidRow(
+      "Deaths by a Cardiovascular Event : ",
+      strong("450")
+    )
+  })
+
+  output$mldMyoNoTX <- renderUI({
+    fluidRow(
+      "Mild Myopathies : ",
+      strong("400")
+    )
+  })
+  
+  output$modMyoNoTX <- renderUI({
+    fluidRow(
+      "Moderate Myopathies : ",
+      strong("12")
+    )
+  })
+  
+  output$sevMyoNoTX <- renderUI({
+    fluidRow(
+      "Severe Myopathies : ",
+      strong("3")
     )
   })
   
