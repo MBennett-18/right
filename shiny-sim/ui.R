@@ -67,10 +67,10 @@ shinyUI(fluidPage(
           htmlOutput("modMyoTX"),
           htmlOutput("sevMyoTX"),
           htmlOutput("stoppedTreatTX"),
-          htmlOutput("switchTreatTX")        )
+          htmlOutput("switchTreatTX")
+        )
       ),
 
-      
       h3("Simulation Method"),
       img(src="SimvastatinMethod.png", width="60%")
     )
