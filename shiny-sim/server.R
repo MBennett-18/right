@@ -8,7 +8,11 @@ shinyServer(function(input, output)
   #run({x <- shinyStub(input)})
   
   output$lifeHist <- renderPlot({
-    hist(rnorm(1000, mean=75, sd=10), main="", sub="", xlab="Age (years)", freq=FALSE)
+    colorA <- rgb(1,0,0,0.5)
+    colorB <- rgb(0,0,1,0.5)
+    hist(rnorm(1000, mean=75, sd=10), main="", sub="", xlab="Age (years)", freq=FALSE, col=colorA, breaks=20)
+    hist(rnorm(1000, mean=60, sd=12), add=TRUE, freq=FALSE, col=colorB)
+    legend(90, 0.035, c("No TX","TX"), fill=c(colorB,colorA))
   })
   
   output$lifeExpect <- renderUI({
