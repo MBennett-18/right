@@ -90,28 +90,54 @@ secular_death <- function(traj)
   )
 }
 
-# Random event 'other' example
-days_till_other <- function(attrs)
+# Mild Myopathy events
+days_till_mild_myopathy <- function(attrs)
 {
-  t2e <- rexp(1, 0.001)
+  drug <- attrs[["CVDdrug"]]
 
-  return(t2e)
+  time_frame <- 1825 # 5 Years
+  risk       <- if(drug == 0) 1e-7 else 0.05
+  rate       <- -log(1-risk)/time_frame
+  
+  return(rexp(1, rate))
 }
 
-# This other will only have a chance of dying. So the branch
-# has two outcomes.
-other_event <- function(traj)
+# Mark a mild myopathy event
+mild_myopathy <- function(traj)
 {
   traj %>%
-  mark("other_event") %>%
-  branch(
-    function() sample(1:2, 1, prob=c(0.05,0.95)),
-    merge=c(FALSE,TRUE), # False is patient death
-    create_trajectory("Other Death") %>%
-      mark("other_death") %>% cleanup_on_death(),
-    create_trajectory("Event Passes w/o Incident") %>%
-      timeout(0)
-  )
+  mark("mild_myopathy")
+}
+
+# Moderate myopathy events
+days_till_mod_myopathy <- function(attrs)
+{
+  drug <- attrs[["CVDdrug"]]
+  gt   <- attrs[["CVDgenotype"]]
+  
+  rr <- if(drug == 1)
+  {
+    c(1, 2.55, 9.56)[gt]
+  } else if(drug == 2)
+  {
+    c(1, 1.08, 4.05)[gt]
+  } else
+  {
+    1
+  }
+  
+  time_frame <- 365 # 1 Years
+  risk       <- if(drug == 0) 1e-10 else 0.00011
+  rate       <- -log(1-risk)*rr/time_frame
+  
+  return(rexp(1, rate))
+}
+
+# Mark a moderate myopathy event
+mod_myopathy <- function(traj)
+{
+  traj %>%
+    mark("mod_myopathy")
 }
 
 # Main event registry that is used by the event loop to create and track
@@ -129,10 +155,14 @@ event_registry <- list(
        attr          = "eSecularTime",
        time_to_event = days_till_death,
        func          = secular_death),
-  list(name          = "Other Event",
-       attr          = "eOtherTime",
-       time_to_event = days_till_other,
-       func          = other_event)
+  list(name          = "Mild Myopathy",
+       attr          = "eMildMyoTime",
+       time_to_event = days_till_mild_myopathy,
+       func          = mild_myopathy),
+  list(name          = "Moderate Myopathy",
+       attr          = "eModMyoTime",
+       time_to_event = days_till_mod_myopathy,
+       func          = mod_myopathy)
 )
 
   ##############################################
@@ -151,9 +181,7 @@ counters <- c("natural_death",
               "drug1",
               "drug2",
               "drug3",
-              "drug4",
-              "other_death",
-              "other_event")
+              "drug4")
 
   #################################################
  ##
@@ -238,11 +266,10 @@ assign_attributes <- function(traj, inputs)
   
   traj %>%
   assign_gender_and_age(inputs) %>%
-    timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0}) %>%
+    #timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0}) %>%
   assign_cvd_genotype(inputs)   %>%
-    timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0}) %>%
-  assign_cvd_medication(inputs) %>%
-  timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0})
+    #timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0}) %>%
+  assign_cvd_medication(inputs) #%>% timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0})
 }
 
   ##############################################
@@ -322,8 +349,8 @@ process_events <- function(traj, env)
       event <- ne[['event']]
       event_time <- ne[['event_time']]
     
-      cat(" Next up => ",event$name,"\n")
-      cat("            waiting", event_time-now(env), '\n')
+      #cat(" Next up => ",event$name,"\n")
+      #cat("            waiting", event_time-now(env), '\n')
     
       # Wait the clock time for the nearest event, minus now()
       event_time - now(env)
@@ -396,5 +423,8 @@ arrivals <- get_mon_arrivals(env, per_resource = T)
 
 #hist(arrivals$start_time/365 + 40, main="Death by Natural Causes", xlab="Age")
 hist(arrivals[arrivals$resource == 'natural_death',]$start_time/365+40, main="Natural Death", xlab="Age")
-hist(arrivals[arrivals$resource == 'other_death',]$start_time/365+40, main="Other Death", xlab="Age")
+
+arrivals %>% count(resource)
+
+#hist(arrivals[arrivals$resource == 'other_death',]$start_time/365+40, main="Other Death", xlab="Age")
 
