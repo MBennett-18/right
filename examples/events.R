@@ -46,33 +46,16 @@ env  <- simmer("Simvastatin")
 ## Secular Death
 source('age-weibull.R')
 
-
-# Cleanup a death, 
-# i.e. closeout "in use" counters
-cleanup_on_death <- function(traj)
-{
-  traj %>% branch(
-    function(attrs) attrs[["CVDdrug"]]+1,
-    merge=rep(TRUE,5),
-    create_trajectory() %>% timeout(0),
-    create_trajectory() %>% release("drug1"),
-    create_trajectory() %>% release("drug2"),
-    create_trajectory() %>% release("drug3"),
-    create_trajectory() %>% release("drug4")
-  )
-}
-
-
 # Given attributes of a patient (trajectory), it returns in days 
 # how long till the patient would die a secular death.
 #
 # NOTE: The variable in must be named attrs
-days_till_death <- function(attrs)
+daysTillDeath <- function(attrs)
 {
-  age       <- attrs[['age']]
-  death_age <- ageAtDeath(age, attrs[['gender']])
+  age      <- attrs[['age']]
+  deathAge <- ageAtDeath(age, attrs[['gender']])
   
-  return(365*(death_age-age))
+  return(365*(deathAge-age))
 }
 
 # Given a trajectory, modify as needed when a secular
@@ -81,17 +64,17 @@ days_till_death <- function(attrs)
 # In this case, it marks a counter and terminates 
 # the trajectory. A branch is required, even though
 # it doesn't branch to force the termination.
-secular_death <- function(traj)
+secularDeath <- function(traj)
 {
   traj %>% branch(
     function() 1,
     merge=c(FALSE), # False is patient death
-    create_trajectory("Secular Death") %>% mark("natural_death") %>% cleanup_on_death()
+    create_trajectory("Secular Death") %>% mark("natural_death")
   )
 }
 
 # Random event 'other' example
-days_till_other <- function(attrs)
+daysTillOther <- function(attrs)
 {
   t2e <- rexp(1, 0.001)
 
@@ -100,7 +83,7 @@ days_till_other <- function(attrs)
 
 # This other will only have a chance of dying. So the branch
 # has two outcomes.
-other_event <- function(traj)
+otherEvent <- function(traj)
 {
   traj %>%
   mark("other_event") %>%
@@ -108,7 +91,7 @@ other_event <- function(traj)
     function() sample(1:2, 1, prob=c(0.05,0.95)),
     merge=c(FALSE,TRUE), # False is patient death
     create_trajectory("Other Death") %>%
-      mark("other_death") %>% cleanup_on_death(),
+      mark("other_death"),
     create_trajectory("Event Passes w/o Incident") %>%
       timeout(0)
   )
@@ -127,12 +110,12 @@ other_event <- function(traj)
 event_registry <- list(
   list(name          = "Secular Death",
        attr          = "eSecularTime",
-       time_to_event = days_till_death,
-       func          = secular_death),
+       time_to_event = daysTillDeath,
+       func          = secularDeath),
   list(name          = "Other Event",
        attr          = "eOtherTime",
-       time_to_event = days_till_other,
-       func          = other_event)
+       time_to_event = daysTillOther,
+       func          = otherEvent)
 )
 
   ##############################################
@@ -148,12 +131,11 @@ counters <- c("natural_death",
               "CVD",
               "stopped",
               "switched",
-              "drug1",
-              "drug2",
-              "drug3",
               "drug4",
               "other_death",
               "other_event")
+
+
 
   #################################################
  ##
@@ -161,11 +143,12 @@ counters <- c("natural_death",
 ##
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
-assign_gender_and_age <- function(traj, inputs)
+assign_attributes <- function(traj, inputs)
 {
+  traj %>% 
   # Assign Gender and Age based on Gender
-  traj %>% branch(
-    function() sample(1:2, 1, prob=c(0.5, 0.5)),
+  branch(function()
+    sample(1:2, 1, prob=c(0.5, 0.5)),
     merge=c(TRUE,TRUE),
     create_trajectory("male") %>%
       set_attribute("gender", 1)                      %>%
@@ -173,76 +156,15 @@ assign_gender_and_age <- function(traj, inputs)
     create_trajectory("female") %>%
       set_attribute("gender", 2)                      %>%
       set_attribute("age", inputs$vAge)
-  )
-}
-
-assign_cvd_genotype <- function(traj, inputs)
-{
+  ) %>%
   # Assign Genotype
-  traj %>% branch(
+  branch(
     function() sample(1:3, 1, prob=c(0.730, 0.249, 0.021)),
     merge=rep(TRUE,3),
-    create_trajectory("TT") %>% set_attribute("CVDgenotype", 1),
-    create_trajectory("TC") %>% set_attribute("CVDgenotype", 2),
-    create_trajectory("CC") %>% set_attribute("CVDgenotype", 3)
-  )
-}
-
-assign_cvd_medication <- function(traj, inputs)
-{
-  traj %>% branch(
-    function(attrs) {
-      # No treatment at all
-      if(!inputs$vTX) return(5)
-      
-      # If there is no genotyping, or it's reactive, default to Simvastatin
-      if(is.na(inputs$vPGx) || inputs$vPGx == "Reactive") return(1)
-      
-      # If the genotype is good metabolizer, then default to Simvastatin
-      if(attrs[['CVDgenotype']] == 1) return(1)
-      
-      # Assign second line
-      if(inputs$vSecondLine == "Atorvastin")          return(2)
-      if(inputs$vSecondLine == "Rosuvastatin")        return(3)
-      if(inputs$vSecondLine == "Low/Mod Dose Statin") return(4)
-      
-      # Something went very wrong
-      stop("Invalid Logic in assigning cvd medication")
-    },
-    merge=rep(TRUE,5),
-    create_trajectory("Simvastatin")  %>%
-      set_attribute("CVDdrug", 1) %>%
-      seize("drug1"),
-    create_trajectory("Atorvastin")   %>%
-      set_attribute("CVDdrug", 2) %>%
-      seize("drug2") %>%
-      mark("switched"),
-    create_trajectory("Rosuvastatin") %>%
-      set_attribute("CVDdrug", 3) %>%
-      seize("drug3") %>%
-      mark("switched"),
-    create_trajectory("Low/Moderate Dose Statin") %>%
-      set_attribute("CVDdrug", 4) %>%
-      seize("drug4") %>%
-      mark("switched"),
-    create_trajectory("No Treatment") %>%
-      set_attribute("CVDdrug", 0)
-  )
-}
-
-assign_attributes <- function(traj, inputs)
-{
-  # inputs$vTX  : boolean to treat or not to treat
-  # inputs$vPGx : NA, "Preemptive", or "Reactive"
-  # inputs$vSecondLine : "Atorvastin", "Rosuvastatin", or "Low/Mod Dose Statin"
-  
-  traj %>%
-  assign_gender_and_age(inputs) %>%
-    timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0}) %>%
-  assign_cvd_genotype(inputs)   %>%
-    timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0}) %>%
-  assign_cvd_medication(inputs) %>%
-  timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0})
+    create_trajectory("TT") %>% set_attribute("genotype", 1),
+    create_trajectory("TC") %>% set_attribute("genotype", 2),
+    create_trajectory("CC") %>% set_attribute("genotype", 3)
+  ) # %>% timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0})
 }
 
   ##############################################
@@ -322,8 +244,8 @@ process_events <- function(traj, env)
       event <- ne[['event']]
       event_time <- ne[['event_time']]
     
-      cat(" Next up => ",event$name,"\n")
-      cat("            waiting", event_time-now(env), '\n')
+#      cat(" Next up => ",event$name,"\n")
+#      cat("            waiting", event_time-now(env), '\n')
     
       # Wait the clock time for the nearest event, minus now()
       event_time - now(env)
@@ -379,9 +301,7 @@ simulation <- function(env, inputs)
 # For testing right now
 inputs      <- list()
 inputs$vAge <- 40
-inputs$vTX  <- TRUE
-inputs$vPGx <- "Preemptive"
-inputs$vSecondLine <- "Atorvastin"
+
 
 traj <- simulation(env, inputs)
 
