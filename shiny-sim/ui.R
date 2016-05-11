@@ -7,7 +7,7 @@ shinyUI(fluidPage(
     sidebarPanel(
         submitButton("Run Simulation"),
         selectInput("vPGx", "Testing Method",
-                    c("Proscriptive", "Reactive"), "Proscriptive", FALSE),
+                    c("Preemptive", "Reactive"), "Proscriptive", FALSE),
         selectInput("vSecondLine", "Second Line Drug",
                     c("Atorvastin", "Rosuvastatin", "Low/Mod Dose Statin"), "Low/Mod Dose Statin", FALSE),
         wellPanel(
@@ -58,7 +58,9 @@ shinyUI(fluidPage(
           htmlOutput("deathCVDNoTX"),
           htmlOutput("mldMyoNoTX"),
           htmlOutput("modMyoNoTX"),
-          htmlOutput("sevMyoNoTX")
+          htmlOutput("sevMyoNoTX"),
+          htmlOutput("stoppedTreatNoTX"),
+          htmlOutput("switchTreatNoTX")
         ),
         fluidPage(
           h4("With Genotyping"),

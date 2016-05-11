@@ -1,4 +1,5 @@
 library(shiny)
+library(ggplot2)
 source("shiny-stub.R")
 
 # Define server logic required to draw a histogram
@@ -8,11 +9,14 @@ shinyServer(function(input, output)
   #run({x <- shinyStub(input)})
   
   output$lifeHist <- renderPlot({
-    colorA <- rgb(1,0,0,0.5)
-    colorB <- rgb(0,0,1,0.5)
-    hist(rnorm(1000, mean=75, sd=10), main="", sub="", xlab="Age (years)", freq=FALSE, col=colorA, breaks=20)
-    hist(rnorm(1000, mean=60, sd=12), add=TRUE, freq=FALSE, col=colorB, breaks=20)
-    legend(90, 0.035, c("No TX","TX"), fill=c(colorB,colorA))
+    #colorA <- rgb(1,0,0,0.5)
+    #colorB <- rgb(0,0,1,0.5)
+    #hist(rnorm(1000, mean=75, sd=10), main="", sub="", xlab="Age (years)", freq=FALSE, col=colorA, breaks=20)
+    #hist(rnorm(1000, mean=60, sd=12), add=TRUE, freq=FALSE, col=colorB, breaks=20)
+    #legend(90, 0.035, c("No TX","TX"), fill=c(colorB,colorA))
+    x <- data.frame(Age=c(rnorm(1000, 75, 10), rnorm(1000, 60, 12)),
+                    Treatment=c(rep("Prescribed",1000), rep("No Treatment",1000)))
+    ggplot(x, aes(Age, fill = Treatment)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
   })
   
   output$lifeExpect <- renderUI({
@@ -148,6 +152,20 @@ shinyServer(function(input, output)
     fluidRow(
       "Severe Myopathies : ",
       strong("3")
+    )
+  })
+  
+  output$stoppedTreatNoTX <- renderUI({
+    fluidRow(
+      "Stopped Treatement : ",
+      strong("0")
+    )
+  })
+  
+  output$switchTreatNoTX <- renderUI({
+    fluidRow(
+      "Switched Treatment : ",
+      strong("0")
     )
   })
   
