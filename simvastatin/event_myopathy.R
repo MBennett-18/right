@@ -10,15 +10,24 @@ switch_statin <- function()
       create_trajectory("Switch to Second Line") %>%
         mark("switched") %>%
         release("drug1") %>%
-        set_attribute("CVDdrug", function(attrs) attrs[['second_line']]),
+        set_attribute("CVDdrug", function(attrs) attrs[['second_line']]) %>%
+        branch(
+          function(attrs) attrs[['second_line']]-1,
+          merge=rep(TRUE,3),
+          create_trajectory() %>% seize("drug2"),
+          create_trajectory() %>% seize("drug3"),
+          create_trajectory() %>% seize("drug4")
+        ),
       create_trajectory("Switch to Low Dose") %>%
         mark("switched") %>%
         release("drug2") %>%
-        set_attribute("CVDdrug", 4),
+        set_attribute("CVDdrug", 4) %>%
+        seize("drug4"),
       create_trajectory("Switch to Low Dose") %>%
         mark("switched") %>%
         release("drug3") %>%
-        set_attribute("CVDdrug", 4),
+        set_attribute("CVDdrug", 4) %>%
+        seize("drug4"),
       create_trajectory("Stopped Treatment") %>%
         mark("stopped")  %>%
         release("drug4") %>%
