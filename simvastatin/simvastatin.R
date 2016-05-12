@@ -40,8 +40,9 @@ counters <- c("secular_death",
               "mild_myopathy",
               "mod_myopathy",
               "sev_myopathy",
-              "CVD",
-              "CVDDeath",
+              "rahbdo_death",
+              "cvd",
+              "cvd_death",
               "stopped",
               "switched",
               "drug1",
@@ -61,6 +62,20 @@ counters <- c("secular_death",
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
 
+stop_treatment <- function(traj)
+{
+  traj %>% branch(
+    function(attrs) attrs[["CVDdrug"]]+1,
+    merge=rep(TRUE,5),
+    create_trajectory() %>% timeout(0),
+    create_trajectory() %>% release("drug1"),
+    create_trajectory() %>% release("drug2"),
+    create_trajectory() %>% release("drug3"),
+    create_trajectory() %>% release("drug4")
+  ) %>%
+  set_attribute("CVDdrug", 0)
+}
+
 # Cleanup a death function, called for any form of death
 # This is needed for use in any event that results in a
 # death. One must closeout "in use" counters, otherwise they won't
@@ -69,15 +84,7 @@ cleanup_on_death <- function(traj)
 {
   traj %>% 
   release("life") %>%
-  branch(
-    function(attrs) attrs[["CVDdrug"]]+1,
-    merge=rep(TRUE,5),
-    create_trajectory() %>% timeout(0),
-    create_trajectory() %>% release("drug1"),
-    create_trajectory() %>% release("drug2"),
-    create_trajectory() %>% release("drug3"),
-    create_trajectory() %>% release("drug4")
-  )
+  stop_treatment()
 }
 
 source('event_secular_death.R')
@@ -157,7 +164,17 @@ assign_cvd_genotype <- function(traj, inputs)
 
 assign_cvd_medication <- function(traj, inputs)
 {
-  traj %>% branch(
+  traj %>%
+  set_attribute("second_line",
+    function() {
+    if(inputs$vSecondLine == "Atorvastin")          {return(2)} else
+    if(inputs$vSecondLine == "Rosuvastatin")        {return(3)} else
+    if(inputs$vSecondLine == "Low/Mod Dose Statin") {return(4)}
+    
+    # Something went very wrong
+    stop("Invalid Logic in assigning cvd medication")
+  }) %>%
+  branch(
     function(attrs) {
       # No treatment at all
       if(!inputs$vTX) return(5)
@@ -169,12 +186,7 @@ assign_cvd_medication <- function(traj, inputs)
       if(attrs[['CVDgenotype']] == 1) return(1)
       
       # Assign second line
-      if(inputs$vSecondLine == "Atorvastin")          return(2)
-      if(inputs$vSecondLine == "Rosuvastatin")        return(3)
-      if(inputs$vSecondLine == "Low/Mod Dose Statin") return(4)
-      
-      # Something went very wrong
-      stop("Invalid Logic in assigning cvd medication")
+      return(attrs[['second_line']])
     },
     merge=rep(TRUE,5),
     create_trajectory("Simvastatin")  %>%
@@ -223,7 +235,7 @@ source('event_main_loop.R')
 # For testing right now
 inputs      <- list()
 inputs$vAge <- 40
-inputs$vTX  <- FALSE
+inputs$vTX  <- TRUE
 inputs$vPGx <- "Preemptive"
 inputs$vSecondLine <- "Atorvastin"
 

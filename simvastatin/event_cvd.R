@@ -54,11 +54,11 @@ days_till_cvd <- function(attrs)
 cvd <- function(traj)
 {
   traj %>%
-  mark("CVD") %>%
+  mark("cvd") %>%
   branch(
     function() sample(1:2, 1, prob=c(0.117, 0.883)),
     merge=c(FALSE, TRUE),
-    create_trajectory("CVD w/ Death") %>% mark("CVDDeath") %>% cleanup_on_death(),
+    create_trajectory("CVD w/ Death") %>% mark("cvd_death") %>% cleanup_on_death(),
     create_trajectory("CVD Event") %>% timeout(0)
   )
 }

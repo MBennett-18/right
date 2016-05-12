@@ -1,5 +1,75 @@
 library(simmer)
 
+switch_statin <- function()
+{
+  create_trajectory("Switch Statin") %>% 
+    branch(
+      function(attrs) attrs[["CVDdrug"]]+1,
+      merge=rep(TRUE,5),
+      create_trajectory("No Treatment Change") %>% timeout(0),
+      create_trajectory("Switch to Second Line") %>%
+        mark("switched") %>%
+        release("drug1") %>%
+        set_attribute("CVDdrug", function(attrs) attrs[['second_line']]),
+      create_trajectory("Switch to Low Dose") %>%
+        mark("switched") %>%
+        release("drug2") %>%
+        set_attribute("CVDdrug", 4),
+      create_trajectory("Switch to Low Dose") %>%
+        mark("switched") %>%
+        release("drug3") %>%
+        set_attribute("CVDdrug", 4),
+      create_trajectory("Stopped Treatment") %>%
+        mark("stopped")  %>%
+        release("drug4") %>%
+        set_attribute("CVDdrug", 0)
+  )
+}
+
+stop_cvd_treatment <- function()
+{
+  create_trajectory("Stop CVD Treatment") %>%
+    branch(
+      function(attrs) (attrs[["CVDdrug"]] == 0) + 1,
+      merge=c(TRUE,TRUE),
+      create_trajectory("Stopping") %>% mark("stopped") %>% stop_treatment(),
+      create_trajectory("Already no treatment") %>% timeout(0) # Already no treatment
+    )
+}
+
+decrease_statin_dose <- function()
+{
+  create_trajectory("Decrease Statin Dose") %>%
+    branch(
+      function(attrs){
+        drug <- attrs[['CVDdrug']]
+        if(drug == 0) {return(1)} else
+        if(drug == 4) {return(2)} else
+        return(3)
+      },
+      merge=rep(TRUE,3),
+      create_trajectory() %>% timeout(0), # Already no treatment
+      create_trajectory("Stopping") %>% mark("stopped") %>% stop_treatment(),
+      create_trajectory("Decreasing") %>%
+        mark("switched") %>%
+        stop_treatment() %>%
+        seize("drug4")   %>%
+        set_attribute("CVDdrug", 4)
+    )
+}
+
+next_step <- function(traj)
+{
+  traj %>%
+  branch(
+    function() sample(1:3, 1, prob=c(0.591, 0.23, 0.179)),
+    merge=rep(TRUE,3),
+    switch_statin(),
+    stop_cvd_treatment(),
+    decrease_statin_dose()
+  )
+}
+
 
 # Mild Myopathy events
 days_till_mild_myopathy <- function(attrs)
@@ -17,7 +87,8 @@ days_till_mild_myopathy <- function(attrs)
 mild_myopathy <- function(traj)
 {
   traj %>%
-    mark("mild_myopathy")
+  mark("mild_myopathy") %>%
+  next_step()
 }
 
 # Moderate myopathy events
@@ -48,7 +119,8 @@ days_till_mod_myopathy <- function(attrs)
 mod_myopathy <- function(traj)
 {
   traj %>%
-    mark("mod_myopathy")
+  mark("mod_myopathy") %>%
+  next_step()
 }
 
 # Severe myopathy events
@@ -79,5 +151,11 @@ days_till_sev_myopathy <- function(attrs)
 sev_myopathy <- function(traj)
 {
   traj %>%
-    mark("sev_myopathy")
+  mark("sev_myopathy") %>%
+  branch(
+    function() sample(1:2, 1, prob=c(0.1, 0.9)),
+    merge = c(FALSE, TRUE),
+    create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_death(),
+    create_trajectory("Severe Myopathy") %>% timeout(0)
+  )
 }
