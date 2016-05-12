@@ -253,9 +253,28 @@ env %>% create_counters(counters) %>%
 arrivals <- get_mon_arrivals(env, per_resource = T)
 
 #hist(arrivals$start_time/365 + 40, main="Death by Natural Causes", xlab="Age")
-hist(arrivals[arrivals$resource == 'secular_death',]$start_time/365+40, main="Natural Death", xlab="Age")
+#hist(arrivals[arrivals$resource == 'secular_death',]$start_time/365+40, main="Natural Death", xlab="Age")
 
 arrivals %>% count(resource)
 
 #hist(arrivals[arrivals$resource == 'other_death',]$start_time/365+40, main="Other Death", xlab="Age")
 
+# Compare with no treatment
+inputs$vTX  <- FALSE
+env  <- simmer("No Treatment")
+traj <- simulation(env, inputs)
+env %>% create_counters(counters) %>%
+  add_generator("patient", traj, at(rep(0, 1000)), mon=2) %>%
+  run(36500) %>% # Simulate 100 years.
+  wrap()
+
+# Look at summary statistics
+arrivalsNoTX <- get_mon_arrivals(env, per_resource = T)
+
+x <- data.frame(Age=c(subset(arrivals,     resource=="life")$end_time / 365+40, 
+                      subset(arrivalsNoTX, resource=="life")$end_time / 365 +40
+                      ),
+                Treatment=c(rep("Statin",1000), rep("No Treatment",1000)))
+
+ggplot(x, aes(Age, fill = Treatment)) +
+      geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity', binwidth=5)
