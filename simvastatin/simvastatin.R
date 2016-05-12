@@ -23,10 +23,8 @@
 ##
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
-library(shiny)
-library(simmer)
-library(dplyr)
 
+library(simmer)
 
 # Define simulation environment first
 # Important: this allows calls of now() inside trajectories
@@ -43,12 +41,8 @@ env  <- simmer("Simvastatin")
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
 
-## Secular Death
-source('age-weibull.R')
-
-
-# Cleanup a death, 
-# i.e. closeout "in use" counters
+# Cleanup a death function
+# i.e. closeout "in use" counters, otherwise they won't appear in statistics
 cleanup_on_death <- function(traj)
 {
   traj %>% branch(
@@ -62,114 +56,8 @@ cleanup_on_death <- function(traj)
   )
 }
 
-
-# Given attributes of a patient (trajectory), it returns in days 
-# how long till the patient would die a secular death.
-#
-# NOTE: The variable in must be named attrs
-days_till_death <- function(attrs)
-{
-  age       <- attrs[['age']]
-  death_age <- ageAtDeath(age, attrs[['gender']])
-  
-  return(365*(death_age-age))
-}
-
-# Given a trajectory, modify as needed when a secular
-# death occurs.
-#
-# In this case, it marks a counter and terminates 
-# the trajectory. A branch is required, even though
-# it doesn't branch to force the termination.
-secular_death <- function(traj)
-{
-  traj %>% branch(
-    function() 1,
-    merge=c(FALSE), # False is patient death
-    create_trajectory("Secular Death") %>% mark("natural_death") %>% cleanup_on_death()
-  )
-}
-
-# Mild Myopathy events
-days_till_mild_myopathy <- function(attrs)
-{
-  drug <- attrs[["CVDdrug"]]
-
-  time_frame <- 1825 # 5 Years
-  risk       <- if(drug == 0) 1e-7 else 0.05
-  rate       <- -log(1-risk)/time_frame
-  
-  return(rexp(1, rate))
-}
-
-# Mark a mild myopathy event
-mild_myopathy <- function(traj)
-{
-  traj %>%
-  mark("mild_myopathy")
-}
-
-# Moderate myopathy events
-days_till_mod_myopathy <- function(attrs)
-{
-  drug <- attrs[["CVDdrug"]]
-  gt   <- attrs[["CVDgenotype"]]
-  
-  rr <- if(drug == 1)
-  {
-    c(1, 2.55, 9.56)[gt]
-  } else if(drug == 2)
-  {
-    c(1, 1.08, 4.05)[gt]
-  } else
-  {
-    1
-  }
-  
-  time_frame <- 365 # 1 Year
-  risk       <- if(drug == 0) 1e-10 else 0.00011
-  rate       <- -log(1-risk)*rr/time_frame
-  
-  return(rexp(1, rate))
-}
-
-# Mark a moderate myopathy event
-mod_myopathy <- function(traj)
-{
-  traj %>%
-    mark("mod_myopathy")
-}
-
-# Severe myopathy events
-days_till_sev_myopathy <- function(attrs)
-{
-  drug <- attrs[["CVDdrug"]]
-  gt   <- attrs[["CVDgenotype"]]
-  
-  rr <- if(drug == 1)
-  {
-    c(1, 2.55, 9.56)[gt]
-  } else if(drug == 2)
-  {
-    c(1, 1.08, 4.05)[gt]
-  } else
-  {
-    1
-  }
-  
-  time_frame <- 365 # 1 Year
-  risk       <- if(drug == 0) 1e-16 else 0.000034
-  rate       <- -log(1-risk)*rr/time_frame
-  
-  return(rexp(1, rate))
-}
-
-# Mark a severe myopathy event
-sev_myopathy <- function(traj)
-{
-  traj %>%
-    mark("sev_myopathy")
-}
+source('event_secular_death.R')
+source('event_myopathy.R')
 
 # Main event registry that is used by the event loop to create and track
 # event in a generic manner. Each has a:
@@ -206,7 +94,7 @@ event_registry <- list(
 ##
 ## MODIFY THIS LIST FOR YOUR SIMULATION
 ##
-counters <- c("natural_death",
+counters <- c("secular_death",
               "mild_myopathy",
               "mod_myopathy",
               "sev_myopathy",
@@ -307,130 +195,7 @@ assign_attributes <- function(traj, inputs)
   assign_cvd_medication(inputs) #%>% timeout(function(attrs) {print("Assign Attrs"); print(attrs); 0})
 }
 
-  ##############################################
- ##
-## Helper functions for managing counters
-##
-## Hopefully, no modification required.
-##
-
-# Create the counters, takes a list
-create_counters <- function(env, counters)
-{
-    sapply(counters, FUN=function(counter)
-    {
-        env <- add_resource(env, counter, Inf, 0)
-    })
-
-    env
-}
-
-# Mark a counter
-mark <- function(traj, counter)
-{
-    traj               %>%
-    seize(counter,1)   %>%
-    timeout(0)         %>%
-    release(counter,1)
-}
-
-  ##############################################
- ##
-## Helper functions for managing events
-##
-## Hopefully, no modification required.
-##
-assign_events <- function(traj, inputs)
-{
-  sapply(event_registry, FUN=function(event)
-  {
-    traj <- set_attribute(traj, event$attr, function(attrs)
-    {
-      event$time_to_event(attrs)
-    })
-  })
-  traj
-}
-
-# Find the next event based on time
-next_event <- function(attrs)
-{
-  event_time <- Inf
-  event      <- NA
-  id         <- 0
-  for(i in 1:length(event_registry))
-  {
-    e <- event_registry[[i]]
-    tmp_time   <- attrs[[e$attr]]
-    if(tmp_time < event_time)
-    {
-      event      <- e
-      event_time <- tmp_time
-      id         <- i
-    }
-  }
-  
-  return(list(event=event, event_time=event_time, id=id))
-}
-
-# Process events in main loop
-process_events <- function(traj, env)
-{
-  # Find the next event from possible events, and timeout (wait) till that moment
-  traj <- timeout(traj, function(attrs)
-    {
-      # Determine next up
-      ne <- next_event(attrs)
-      event <- ne[['event']]
-      event_time <- ne[['event_time']]
-    
-      #cat(" Next up => ",event$name,"\n")
-      #cat("            waiting", event_time-now(env), '\n')
-    
-      # Wait the clock time for the nearest event, minus now()
-      event_time - now(env)
-    })
-  
-  # Create a handler for every possible event, using their
-  # list position as the branch number
-  # This will determine the id of the next event
-  # Call it's modification function
-  # and then update it's next time to event
-  args <- lapply(event_registry,FUN=function(e) {
-    create_trajectory(e$name) %>%
-      e$func() %>%
-      set_attribute(e$attr, function(attrs) {now(env)+e$time_to_event(attrs)})
-  })
-  args$traj   <- traj
-  args$option <- function(attrs) next_event(attrs)$id
-  args$merge  <- rep(TRUE,length(event_registry))
-
-  do.call(branch, args)
-}
-
-  ##############################################
- ##
-## MAIN LOOP
-##
-## This should not require modification
-## This creates a patient simulation (trajectory)
-## 
-## It uses a branch in a manner to prevent the
-## rollback from looking further up the stack
-## of the event loop. 
-##
-simulation <- function(env, inputs)
-{
-    create_trajectory("Patient")     %>%
-    assign_attributes(inputs)        %>%
-    assign_events(inputs)            %>%
-    branch( # Used branch, to prevent rollback from looking inside event loop function
-      function() 1,
-      merge=TRUE,
-      create_trajectory("main_loop") %>% process_events(env)
-    ) %>% 
-    rollback(amount=1, times=100) # Process up to 100 events per person
-}
+source('event_main_loop.R')
 
   ##############################################
  ##
@@ -445,19 +210,21 @@ inputs$vTX  <- TRUE
 inputs$vPGx <- "Preemptive"
 inputs$vSecondLine <- "Atorvastin"
 
+library(dplyr)
+
 traj <- simulation(env, inputs)
 
 # Run the simulation 
-env %>%  create_counters(counters) %>%
-         add_generator("patient", traj, at(rep(0, 1000)), mon=2) %>%
-         run(36500) %>% # Simulate 100 years.
-         wrap()
+env %>% create_counters(counters) %>%
+        add_generator("patient", traj, at(rep(0, 1000)), mon=2) %>%
+        run(36500) %>% # Simulate 100 years.
+        wrap()
 
 # Look at summary statistics
 arrivals <- get_mon_arrivals(env, per_resource = T)
 
 #hist(arrivals$start_time/365 + 40, main="Death by Natural Causes", xlab="Age")
-hist(arrivals[arrivals$resource == 'natural_death',]$start_time/365+40, main="Natural Death", xlab="Age")
+hist(arrivals[arrivals$resource == 'secular_death',]$start_time/365+40, main="Natural Death", xlab="Age")
 
 arrivals %>% count(resource)
 
