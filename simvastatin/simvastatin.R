@@ -27,8 +27,28 @@
 library(simmer)
 
 # Define simulation environment first
-# Important: this allows calls of now() inside trajectories
+# IMPORTANT: this allows calls of now() inside trajectories
 env  <- simmer("Simvastatin")
+
+  ##############################################
+ ##
+## User defined counters / trackers
+##
+## MODIFY THIS LIST FOR YOUR SIMULATION
+##
+counters <- c("secular_death",
+              "mild_myopathy",
+              "mod_myopathy",
+              "sev_myopathy",
+              "CVD",
+              "CVDDeath",
+              "stopped",
+              "switched",
+              "drug1",
+              "drug2",
+              "drug3",
+              "drug4",
+              "life")
 
   ##############################################
  ##
@@ -41,11 +61,15 @@ env  <- simmer("Simvastatin")
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
 
-# Cleanup a death function
-# i.e. closeout "in use" counters, otherwise they won't appear in statistics
+# Cleanup a death function, called for any form of death
+# This is needed for use in any event that results in a
+# death. One must closeout "in use" counters, otherwise they won't
+# appear in statistics
 cleanup_on_death <- function(traj)
 {
-  traj %>% branch(
+  traj %>% 
+  release("life") %>%
+  branch(
     function(attrs) attrs[["CVDdrug"]]+1,
     merge=rep(TRUE,5),
     create_trajectory() %>% timeout(0),
@@ -58,6 +82,7 @@ cleanup_on_death <- function(traj)
 
 source('event_secular_death.R')
 source('event_myopathy.R')
+source('event_cvd.R')
 
 # Main event registry that is used by the event loop to create and track
 # event in a generic manner. Each has a:
@@ -85,26 +110,13 @@ event_registry <- list(
   list(name          = "Severe Myopathy",
        attr          = "eSevMyoTime",
        time_to_event = days_till_sev_myopathy,
-       func          = sev_myopathy)
+       func          = sev_myopathy),
+  list(name          = "Cardiovascular Disease",
+       attr          = "eCVDTime",
+       time_to_event = days_till_cvd,
+       func          = cvd)
 )
 
-  ##############################################
- ##
-## User defined counters
-##
-## MODIFY THIS LIST FOR YOUR SIMULATION
-##
-counters <- c("secular_death",
-              "mild_myopathy",
-              "mod_myopathy",
-              "sev_myopathy",
-              "CVD",
-              "stopped",
-              "switched",
-              "drug1",
-              "drug2",
-              "drug3",
-              "drug4")
 
   #################################################
  ##
@@ -112,21 +124,23 @@ counters <- c("secular_death",
 ##
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
+##
 assign_gender_and_age <- function(traj, inputs)
 {
   # Assign Gender and Age based on Gender
-  traj %>% branch(
+  traj %>%
+  seize("life") %>%
+  branch(
     function() sample(1:2, 1, prob=c(0.5, 0.5)),
     merge=c(TRUE,TRUE),
     create_trajectory("male") %>%
       set_attribute("gender", 1)                      %>%
-      set_attribute("ageAtStart", inputs$vAge)        %>%
-      set_attribute("age", function(attrs) attrs[['ageAtStart']]),
+      set_attribute("ageAtStart", inputs$vAge),
     create_trajectory("female") %>%
       set_attribute("gender", 2)                      %>%
-      set_attribute("ageAtStart", inputs$vAge)        %>%
-      set_attribute("age", function(attrs) attrs[['ageAtStart']])
-  )
+      set_attribute("ageAtStart", inputs$vAge)
+  ) %>%
+  set_attribute("age", function(attrs) attrs[['ageAtStart']])
 }
 
 assign_cvd_genotype <- function(traj, inputs)
@@ -183,6 +197,7 @@ assign_cvd_medication <- function(traj, inputs)
   )
 }
 
+## This function is referenced in main event loop
 assign_attributes <- function(traj, inputs)
 {
   # inputs$vTX  : boolean to treat or not to treat
@@ -208,7 +223,7 @@ source('event_main_loop.R')
 # For testing right now
 inputs      <- list()
 inputs$vAge <- 40
-inputs$vTX  <- TRUE
+inputs$vTX  <- FALSE
 inputs$vPGx <- "Preemptive"
 inputs$vSecondLine <- "Atorvastin"
 
