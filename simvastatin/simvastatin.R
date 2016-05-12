@@ -120,10 +120,12 @@ assign_gender_and_age <- function(traj, inputs)
     merge=c(TRUE,TRUE),
     create_trajectory("male") %>%
       set_attribute("gender", 1)                      %>%
-      set_attribute("age", inputs$vAge),
+      set_attribute("ageAtStart", inputs$vAge)        %>%
+      set_attribute("age", function(attrs) attrs[['ageAtStart']]),
     create_trajectory("female") %>%
       set_attribute("gender", 2)                      %>%
-      set_attribute("age", inputs$vAge)
+      set_attribute("ageAtStart", inputs$vAge)        %>%
+      set_attribute("age", function(attrs) attrs[['ageAtStart']])
   )
 }
 
