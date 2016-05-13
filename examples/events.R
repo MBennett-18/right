@@ -23,7 +23,6 @@
 ##
 ## MODIFY THIS FOR YOUR SIMULATION
 ##
-library(shiny)
 library(simmer)
 library(dplyr)
 
@@ -44,7 +43,7 @@ env  <- simmer("Simvastatin")
 ##
 
 ## Secular Death
-source('age-weibull.R')
+source('examples/age-weibull.R')
 
 # Given attributes of a patient (trajectory), it returns in days 
 # how long till the patient would die a secular death.

@@ -66,10 +66,13 @@ twoway <- function(attrs, attr)
   c(attrs[[attr]], 1-attrs[[attr]])
 }
 
+# Making a named function
+pick_age <- function() sample(1:2, 1, prob=c(0.63, 0.37))
+
 traj <- create_trajectory("ASPS") %>%
   # This is the configuration of a patient
-  branch(function() sample(1:2, 1, prob=c(0.63, 0.37)),
-         merge=c(T, T),
+  branch(pick_age,
+         merge=c(TRUE, TRUE),
          create_trajectory("Male") %>%
            set_attribute("gender", 1) %>%
            set_attribute("age", rMaleAge),
@@ -78,26 +81,29 @@ traj <- create_trajectory("ASPS") %>%
            set_attribute("age", rFemaleAge)
   ) %>%
   set_attribute("previousStrokes", rPreviousStroke) %>%
+  # IMPORTANT
+  # Argument "attrs" must be named this, as simmer detects that and
+  # provides the attributes currently tied to the trajectory
   set_attribute("countStrokes",    function(attrs) attrs[["previousStrokes"]]) %>%
   # Re-entry here, i.e. loop on a year
   set_attribute("CHADS",           function(attrs) scoreCHADS(attrs)) %>%
   set_attribute("strokeRisk",      function(attrs) strokeRisk(attrs)) %>%
   branch(function(attrs) sample(1:2, 1, prob=twoway(attrs, "strokeRisk")),
-         merge=c(T, T),
+         merge=c(TRUE, TRUE),
          create_trajectory("Stroke Event") %>%
-           #timeout(function() {print("stroke event!"); return(0);}) %>%
+           timeout(function() {print("stroke event!"); return(0);}) %>%
            seize("strokes", 1) %>%
            set_attribute("countStrokes",    function(attrs) 1+attrs[["countStrokes"]]) %>%
            release("strokes") %>%
            branch(function() sample(1:2, 1, prob=c(0.81, 0.19)),
-                  merge=c(T, F),
+                  merge=c(TRUE, FALSE),
                   create_trajectory("Survived Stroke") %>% timeout(0),
                   create_trajectory("Fatality") %>% seize("deaths", 1) %>% release("deaths")
            ) %>% timeout(0),
          create_trajectory("No Stroke") %>% timeout(0)
         ) %>%
-  set_attribute("age", function(attrs) attrs[["age"]]+1) %>%
-  timeout(1) %>%
+  set_attribute("age", function(attrs) attrs[["age"]]+1) %>% # Bump up Age
+  timeout(1) %>% # Wait 1 year
   rollback(amount=5,times=5) # Do it 5 more times, for 6 years total
 
 env <- simmer("Sim ARENA Toy") %>%
@@ -107,7 +113,7 @@ env <- simmer("Sim ARENA Toy") %>%
   run() %>%
   wrap()
 
-arrivals <- get_mon_arrivals(env, per_resource = T)
+arrivals <- get_mon_arrivals(env, per_resource = TRUE)
 
 # Times that each branch was entered
 arrivals %>% count(resource)
