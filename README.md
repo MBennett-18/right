@@ -16,6 +16,8 @@ The goals of this code base in the RIGHT project are as follows:
 
 For questions regarding this repository of code, please contact Shawn Garbett <shawn.garbett@vanderbilt.edu>, at Biostatistics, Vanderbilt University Medical Center.
 
+Shawn causing a merge conflict.
+
 All code Copyright (c) 2016, Vanderbilt University Medical Center
 
 TODO: Licensing choice.
