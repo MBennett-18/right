@@ -1,3 +1,13 @@
+  ###########################################################################
+ ##
+##  Assign and Track Cardiovascular Events
+##
+## Risk is a composite based on age and gener
+## Source: http://chd.bestsciencemedicine.com/calc2.html
+## Risks of heart attacks, angina/coronary insufficiency, heart failure, 
+## stroke and intermittent claudication based on data from Framingham
+## Cohort Study.
+
 library(simmer)
 
 age_bracket <- function(attrs)

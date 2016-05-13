@@ -236,8 +236,17 @@ source('event_main_loop.R')
 inputs      <- list()
 inputs$vAge <- 40
 inputs$vTX  <- TRUE
-inputs$vPGx <- "Preemptive"
+inputs$vPGx <- "Reactive"
 inputs$vSecondLine <- "Atorvastin"
+#inputs$vSecondLine <- "Rosuvastatin"
+#inputs$vSecondLine <-  "Low/Mod Dose Statin"
+inputs$vCostDrug1 <- 147
+inputs$vCostDrug2 <- 173.1
+inputs$vCostDrug3 <- 259.2
+inputs$vCostDrug4 <- 143.7
+inputs$vCostPGx   <- 250
+
+N <- 14000
 
 library(dplyr)
 
@@ -245,7 +254,7 @@ traj <- simulation(env, inputs)
 
 # Run the simulation 
 env %>% create_counters(counters) %>%
-        add_generator("patient", traj, at(rep(0, 1000)), mon=2) %>%
+        add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
         run(36500) %>% # Simulate 100 years.
         wrap()
 
@@ -264,7 +273,7 @@ inputs$vTX  <- FALSE
 env  <- simmer("No Treatment")
 traj <- simulation(env, inputs)
 env %>% create_counters(counters) %>%
-  add_generator("patient", traj, at(rep(0, 1000)), mon=2) %>%
+  add_generator("patient", traj, at(rep(0, N)), mon=2) %>%
   run(36500) %>% # Simulate 100 years.
   wrap()
 
@@ -272,9 +281,52 @@ env %>% create_counters(counters) %>%
 arrivalsNoTX <- get_mon_arrivals(env, per_resource = T)
 
 x <- data.frame(Age=c(subset(arrivals,     resource=="life")$end_time / 365+40, 
-                      subset(arrivalsNoTX, resource=="life")$end_time / 365 +40
+                      subset(arrivalsNoTX, resource=="life")$end_time / 365+40
                       ),
-                Treatment=c(rep("Statin",1000), rep("No Treatment",1000)))
-
+                Treatment=c(rep("Statin",N), rep("No Treatment",N)))
 ggplot(x, aes(Age, fill = Treatment)) +
       geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity', binwidth=5)
+
+# annualDiscountRate <- 0.03
+# dailyDiscountRate <- ((1+annualDiscountRate)^(1/365) - 1)
+
+annual_discount_rate <- 0.03
+cont_discount_rate   <- -log(1-annualDiscountRate) # Yearly Time Scale
+
+discounted_cost <- function(start_day, end_day, base_yearly_cost, rate = cont_discount_rate)
+{
+  base_yearly_cost*(exp(-rate*start_day/365) - exp(-rate*end_day/365))/rate 
+}
+
+cost <- function(arrivals, inputs)
+{
+  annualDiscountRate <- 0.03
+  contDiscountRate <- -log(1-annualDiscountRate)
+  
+  drug1 <- subset(arrivals, resource=="drug1")
+  drug2 <- subset(arrivals, resource=="drug2")
+  drug3 <- subset(arrivals, resource=="drug3")
+  drug4 <- subset(arrivals, resource=="drug4")
+  
+  lives <- length(subset(arrivals, resource=="life")$name)
+  
+  genotyping_cost <- if(inputs$vTX == TRUE) {inputs$vCostPGx} else {0}
+  
+  (  129 * length(subset(arrivals, resource=="mild_myopathy")$name)  + 
+    2255 * length(subset(arrivals, resource=="mod_myopathy")$name)   + 
+   12811 * length(subset(arrivals, resource=="sev_myopathy")$name)   +
+   20347 * length(subset(arrivals, resource=="cvd")$name)            +
+   sum(discounted_cost(drug1$start_time, drug1$end_time, inputs$vCostDrug1*12) )   +
+   sum(discounted_cost(drug2$start_time, drug2$end_time, inputs$vCostDrug2*12) )   +
+   sum(discounted_cost(drug3$start_time, drug3$end_time, inputs$vCostDrug3*12) )   +
+   sum(discounted_cost(drug4$start_time, drug4$end_time, inputs$vCostDrug4*12) ) )/lives +
+  genotyping_cost # This should be done via a counter as well
+  
+}
+
+# What's up with cost?
+inputs$vTX  <- TRUE
+next_steppers <- subset(arrivals, (resource=="switched" & start_time > 0.0) | resource=="stopped")
+censored <- subset(arrivals,!(name %in% next_steppers$name))
+cost(censored, inputs)
+

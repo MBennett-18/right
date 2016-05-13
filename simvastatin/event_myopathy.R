@@ -1,12 +1,15 @@
 library(simmer)
 
+# Past end of life
+past_end_of_life <- 365*120
+
 switch_statin <- function()
 {
   create_trajectory("Switch Statin") %>% 
     branch(
       function(attrs) attrs[["CVDdrug"]]+1,
       merge=rep(TRUE,5),
-      create_trajectory("No Treatment Change") %>% timeout(0),
+      create_trajectory() %>% timeout(0), # Already no treatment
       create_trajectory("Switch to Second Line") %>%
         mark("switched") %>%
         release("drug1") %>%
@@ -42,7 +45,7 @@ stop_cvd_treatment <- function()
       function(attrs) (attrs[["CVDdrug"]] == 0) + 1,
       merge=c(TRUE,TRUE),
       create_trajectory("Stopping") %>% mark("stopped") %>% stop_treatment(),
-      create_trajectory("Already no treatment") %>% timeout(0) # Already no treatment
+      create_trajectory() %>% timeout(0) # Already no treatment
     )
 }
 
@@ -52,9 +55,9 @@ decrease_statin_dose <- function()
     branch(
       function(attrs){
         drug <- attrs[['CVDdrug']]
-        if(drug == 0) {return(1)} else
-        if(drug == 4) {return(2)} else
-        return(3)
+        if(drug == 0) {return(1)} else # No treatment now
+        if(drug == 4) {return(2)} else # On Low dose currently, -> Stop
+        return(3)                      # This is the intent, other TX -> Low Dose
       },
       merge=rep(TRUE,3),
       create_trajectory() %>% timeout(0), # Already no treatment
@@ -89,7 +92,12 @@ days_till_mild_myopathy <- function(attrs)
   risk       <- if(drug == 0) 1e-7 else 0.05
   rate       <- -log(1-risk)/time_frame
   
-  return(rexp(1, rate))
+  t2e <- rexp(1, rate)
+  
+  # Events are considered to only be in the first year, otherwise beyond end of life
+  if(t2e > 365) {return(past_end_of_life)}
+  
+  return(t2e)
 }
 
 # Mark a mild myopathy event
@@ -121,7 +129,12 @@ days_till_mod_myopathy <- function(attrs)
   risk       <- if(drug == 0) 1e-10 else 0.00011
   rate       <- -log(1-risk)*rr/time_frame
   
-  return(rexp(1, rate))
+  t2e <- rexp(1, rate)
+  
+  # Events are considered to only be in the first year, otherwise beyond end of life
+  if(t2e > 365) {return(past_end_of_life)}
+  
+  return(t2e)
 }
 
 # Mark a moderate myopathy event
@@ -153,7 +166,12 @@ days_till_sev_myopathy <- function(attrs)
   risk       <- if(drug == 0) 1e-16 else 0.000034
   rate       <- -log(1-risk)*rr/time_frame
   
-  return(rexp(1, rate))
+  t2e <- rexp(1, rate)
+  
+  # Events are considered to only be in the first year, otherwise beyond end of life
+  if(t2e > 365) {return(past_end_of_life)}
+  
+  return(t2e)
 }
 
 # Mark a severe myopathy event
@@ -165,6 +183,6 @@ sev_myopathy <- function(traj)
     function() sample(1:2, 1, prob=c(0.1, 0.9)),
     merge = c(FALSE, TRUE),
     create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_death(),
-    create_trajectory("Severe Myopathy") %>% timeout(0)
+    create_trajectory("Severe Myopathy")       %>% timeout(0)
   )
 }
