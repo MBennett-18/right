@@ -17,10 +17,10 @@ shinyUI(fluidPage(
         wellPanel(
           h3("Costs in Dollars"),
           sliderInput("vCostPGx",   "Genotyping (one time)", min=10, max=750, value=250, step=1),
-          sliderInput("vCostDrug1", "Simvastatin (monthly)", min=0.0, max=2000, value=147, step=0.1),
-          sliderInput("vCostDrug2", "Atorvastin (monthly)", min=0.0, max=2000, value=173.1, step=0.1),
-          sliderInput("vCostDrug3", "Rosuvastatin (monthly)", min=0.0, max=2000, value=259.2, step=0.1),
-          sliderInput("vCostDrug4", "Low/Mod Dose Statin (monthly)", min=0.0, max=2000, value=143.7, step=0.1)
+          sliderInput("vCostDrug1", "Simvastatin (yearly)", min=0.0, max=2000, value=147, step=0.1),
+          sliderInput("vCostDrug2", "Atorvastin (yearly)", min=0.0, max=2000, value=173.1, step=0.1),
+          sliderInput("vCostDrug3", "Rosuvastatin (yearly)", min=0.0, max=2000, value=259.2, step=0.1),
+          sliderInput("vCostDrug4", "Low/Mod Dose Statin (yearly)", min=0.0, max=2000, value=143.7, step=0.1)
         ),
         wellPanel(
           h3("Population"),

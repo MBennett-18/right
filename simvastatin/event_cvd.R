@@ -15,6 +15,14 @@
 
 library(simmer)
 
+days_till_reassess_cvd <- function(attrs) { 3650.0 }
+
+reassess_cvd <- function(traj)
+{
+  traj %>%
+    set_attribute("eCVDTime", function(attrs) now(env)+days_till_cvd(attrs))
+}
+
 days_till_cvd <- function(attrs)
 {
   drug       <- attrs[['CVDdrug']]
