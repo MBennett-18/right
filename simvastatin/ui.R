@@ -38,15 +38,15 @@ shinyUI(fluidPage(
       splitLayout(
         fluidPage(
           h4("No Testing"),
-          htmlOutput("qualAdjLifeExpectNoTX"),
-          htmlOutput("costEffectiveRatioNoTX"),
-          htmlOutput("totalCostsNoTX")
+          htmlOutput("qualAdjLifeExpectNoPG"),
+          htmlOutput("costEffectiveRatioNoPG"),
+          htmlOutput("totalCostsNoPG")
         ),
         fluidPage(
           h4("With Genotyping"),
-          htmlOutput("qualAdjLifeExpectTX"),
-          htmlOutput("costEffectiveRatioTX"),
-          htmlOutput("totalCostsTX"),
+          htmlOutput("qualAdjLifeExpectPG"),
+          htmlOutput("costEffectiveRatioPG"),
+          htmlOutput("totalCostsPG"),
           htmlOutput("ICER")
         )
       ),
@@ -55,21 +55,21 @@ shinyUI(fluidPage(
       splitLayout(
         fluidPage(
           h4("No Testing"),
-          htmlOutput("deathCVDNoTX"),
-          htmlOutput("mldMyoNoTX"),
-          htmlOutput("modMyoNoTX"),
-          htmlOutput("sevMyoNoTX"),
-          htmlOutput("stoppedTreatNoTX"),
-          htmlOutput("switchTreatNoTX")
+          htmlOutput("deathCVDNoPG"),
+          htmlOutput("mldMyoNoPG"),
+          htmlOutput("modMyoNoPG"),
+          htmlOutput("sevMyoNoPG"),
+          htmlOutput("stoppedTreatNoPG"),
+          htmlOutput("switchTreatNoPG")
         ),
         fluidPage(
           h4("With Genotyping"),
-          htmlOutput("deathCVDTX"),
-          htmlOutput("mldMyoTX"),
-          htmlOutput("modMyoTX"),
-          htmlOutput("sevMyoTX"),
-          htmlOutput("stoppedTreatTX"),
-          htmlOutput("switchTreatTX")
+          htmlOutput("deathCVDPG"),
+          htmlOutput("mldMyoPG"),
+          htmlOutput("modMyoPG"),
+          htmlOutput("sevMyoPG"),
+          htmlOutput("stoppedTreatPG"),
+          htmlOutput("switchTreatPG")
         )
       ),
 
