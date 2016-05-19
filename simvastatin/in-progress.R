@@ -2,6 +2,7 @@
 source("simvastatin.R")
 source("costs.R")
 
+
 ##############################################
 ##
 ## Piddly bits for development
@@ -10,7 +11,7 @@ source("costs.R")
 ##
 # For testing right now
 
-inputs <- list(
+input <- list(
   vAge        = 40,
   vTX         = TRUE,
   vSecondLine = "Atorvastin",
@@ -25,9 +26,9 @@ inputs <- list(
 #arrivals <- simvastatin(inputs)
 #length(arrivals[arrivals$resource=="life",]$name)
 
-aPG   <- simvastatin(inputs)
+aPG   <- simvastatin(input)
 cPG   <- costs(aPG)
 
-inputs$vPGx <- NA
-aNoPG <- simvastatin(inputs)
-cNoPG <- costs(aNoPG)
+#inputs$vPGx <- NA
+#aNoPG <- simvastatin(inputs)
+#cNoPG <- costs(aNoPG)
