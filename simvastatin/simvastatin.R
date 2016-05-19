@@ -147,10 +147,10 @@ assign_gender_and_age <- function(traj, inputs)
     merge=c(TRUE,TRUE),
     create_trajectory("male") %>%
       set_attribute("gender", 1)                      %>%
-      set_attribute("ageAtStart", inputs$vAge),
+      set_attribute("ageAtStart", function() inputs$vAge),
     create_trajectory("female") %>%
       set_attribute("gender", 2)                      %>%
-      set_attribute("ageAtStart", inputs$vAge)
+      set_attribute("ageAtStart", function() inputs$vAge)
   ) %>%
   set_attribute("age", function(attrs) attrs[['ageAtStart']])
 }
@@ -180,10 +180,10 @@ assign_cvd_medication <- function(traj, inputs)
     stop("Invalid Logic in assigning cvd medication")
   }) %>%
   branch(
-    function() (inputs$vPGx == "None") + 1,
+    function() (is.na(inputs$vPGx) || inputs$vPG=="None")  + 1,
     merge=c(TRUE,TRUE),
-    create_trajectory("Genotyped") %>% mark("genotyped"),
-    create_trajectory() %>% timeout(0)
+    create_trajectory() %>% timeout(0),
+    create_trajectory("Genotyped") %>% mark("genotyped")
   ) %>%
   branch(
     function(attrs) {
@@ -236,5 +236,69 @@ assign_attributes <- function(traj, inputs)
 }
 
 source('event_main_loop.R')
+
+annual_discount_rate <- 0.03
+cont_discount_rate   <- -log(1-annual_discount_rate) # Yearly Time Scale
+discounted_cost <- function(start_day, end_day, base_yearly_cost, rate = cont_discount_rate)
+{
+  base_yearly_cost*(exp(-rate*start_day/365) - exp(-rate*end_day/365))/rate 
+}
+
+simvastatin <- function(inputs, N=14000)
+{
+  env  <- simmer("Simvastatin") %>% create_counters(counters)
+
+  traj  <- simulation(env, inputs)
+
+  env %>%
+    add_generator("patient", traj,   at(rep(0, N)), mon=2) %>%
+    run(36500) %>% # Simulate 100 years.
+    wrap()
+  
+  arrivals <- get_mon_arrivals(env, per_resource = T)
+
+  arrivals$resource <- factor(arrivals$resource, counters)
+  
+  # 1 day events
+  events_to_fix_end <- c("mild_myopathy", "genotyped")
+  arrivals[arrivals$resource %in% events_to_fix_end,]$end_time <- arrivals[arrivals$resource %in% events_to_fix_end,]$start_time + 1.0
+  
+  # 30 day events
+  events_to_fix_end <- c("mod_myopathy","sev_myopathy", "cvd")
+  arrivals[arrivals$resource %in% events_to_fix_end,]$end_time <- arrivals[arrivals$resource %in% events_to_fix_end,]$start_time + 1.0
+  
+  # Compute total activity times
+  arrivals$activity_time <- arrivals$end_time - arrivals$start_time
+  
+  # Computes discounted rate of time
+  arrivals$discounted_time <- discounted_cost(arrivals$start_time, arrivals$end_time, 365.0)
+  
+  # Compute Event base costs
+  idx <- function(str) {as.numeric(factor(str, levels=levels(arrivals$resource)))}
+  base_cost_map <- rep(0, nlevels(arrivals$resource))
+  base_cost_map[idx("drug1")]         <- inputs$vCostDrug1/365
+  base_cost_map[idx("drug2")]         <- inputs$vCostDrug2/365
+  base_cost_map[idx("drug3")]         <- inputs$vCostDrug3/365
+  base_cost_map[idx("drug4")]         <- inputs$vCostDrug4/365
+  base_cost_map[idx("genotyped")]     <- inputs$vCostPGx
+  base_cost_map[idx("mild_myopathy")] <-   129
+  base_cost_map[idx("mod_myopathy")]  <-  2255/30
+  base_cost_map[idx("sev_myopathy")]  <- 12811/30
+  base_cost_map[idx("cvd")]           <- 20347/30
+  
+  # Compute Disutility costs
+  base_disutility_map <- rep(0, nlevels(arrivals$resource))
+  base_disutility_map[idx("mild_myopathy")] <- 0.01
+  base_disutility_map[idx("mod_myopathy")]  <- 0.05
+  base_disutility_map[idx("sev_myopathy")]  <- 0.53
+  base_disutility_map[idx("cvd")]           <- 0.2445
+  
+  arrivals$discounted_cost <- arrivals$discounted_time*base_cost_map[as.numeric(arrivals$resource)]
+  arrivals$disutility <- arrivals$discounted_time*base_disutility_map[as.numeric(arrivals$resource)]
+  
+  arrivals
+}
+
+
 
 
