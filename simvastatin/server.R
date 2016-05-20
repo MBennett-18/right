@@ -42,7 +42,7 @@ shinyServer(function(input, output)
   
   output$lifeExpect <- renderUI({
     stats <- results()[['cPG']]
-    quant <- quantile(stats[,"Life"])
+    quant <- quantile(stats$Life)
     
     fluidRow(
       "Time in Simulation Life Expectancy : ",
@@ -79,7 +79,7 @@ shinyServer(function(input, output)
   
   output$qualAdjLifeExpectPG <- renderUI({
     stats <- results()[['cPG']]
-    quant <- quantile(stats[,"QALY"])
+    quant <- quantile(stats$QALY)
     
     fluidRow(
       "Quality Adjusted Life Exp : ",
@@ -91,21 +91,25 @@ shinyServer(function(input, output)
   
   output$totalCostsPG <- renderUI({
     stats <- results()[['cPG']]
-    quant <- quantile(stats[,"Discounted Cost"])
+    quant <- quantile(stats$Discount.Cost)
     
     fluidRow(
       "Total Disc Costs : $",
-      tags$small(deci(quant[2],2)),
-      strong(deci(quant[3],2)),
-      tags$small(deci(quant[4],2))
+      tags$small(deci(quant[2],0)),
+      strong(deci(quant[3],0)),
+      tags$small(deci(quant[4],0))
     )
   })
   
   output$costEffectiveRatioPG <- renderUI({
+    stats <- results()[['cPG']]
+    quant <- quantile(stats$ce_ratio)
+    
     fluidRow(
-      "Cost Effectiveness Ratio : ",
-      strong("X.XX"),
-      tags$small("(X.XX-X.XX)")
+      "Cost Eff Ratio : ",
+      tags$small(deci(quant[2],1)),
+      strong(deci(quant[3],1)),
+      tags$small(deci(quant[4],1))
     )
   })
   
