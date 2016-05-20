@@ -7,9 +7,10 @@ shinyUI(fluidPage(
     sidebarPanel(
         submitButton("Run Simulation"),
         selectInput("vPGx", "Testing Method",
-                    c("Preemptive", "Reactive"), "Proscriptive", FALSE),
+                    c("Prospective", "Reactive"), "Prospective", FALSE),
         selectInput("vSecondLine", "Second Line Drug",
-                    c("Atorvastin", "Rosuvastatin", "Low/Mod Dose Statin"), "Low/Mod Dose Statin", FALSE),
+                    c("Atorvastin", "Rosuvastatin", "Low/Mod Dose Statin"), "Atorvastin", FALSE),
+        checkboxInput("vTX", "Apply Treatment", TRUE),
         wellPanel(
           h3("Probabilities"),
           sliderInput("vDiscRate", "Discontinuation Rate", min=0.0, max=1.0, value=0.03, step=0.01)

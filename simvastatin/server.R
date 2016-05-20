@@ -6,19 +6,41 @@ source("costs.R")
 # Define server logic required to draw a histogram
 shinyServer(function(input, output)
 {
-  aPG   <- reactive({ simvastatin(input) })
-  cPG   <- costs(aPG)
-#  input$vPGx <- "None"
-#  aNoPG <- simvastatin(input)
-#  cNoPG <- costs(aNoPG)
+  results <- reactive({
+    inputs <- list(vAge = input$vAge,
+                   vTX  = input$vTX,
+                   vSecondLine = input$vSecondLine,
+                   vCostDrug1  = input$vCostDrug1,
+                   vCostDrug2  = input$vCostDrug2,
+                   vCostDrug3  = input$vCostDrug3,
+                   vCostDrug4  = input$vCostDrug4,
+                   vCostPGx    = input$vCostPGx,
+                   vPGx        = input$vPGx)
+    
+    aPG <- simvastatin(inputs) 
+    cPG <- costs(aPG)
+    
+    # Counts
+    cntsPG <- table(aPG$resource)
+    
+    #  input$vPGx <- "None"
+    #  aNoPG <- simvastatin(input)
+    #  cNoPG <- costs(aNoPG)
+    
+    list(aPG=aPG,cPG=cPG,cntsPG=cntsPG)
+  })
   
   output$lifeHist <- renderPlot({
-    x <- data.frame(Age=c(cPG$stats[,"QALY"], rep(NA, 14000)),
+    cPG <- results()[['cPG']]
+
+    x <- data.frame(Age=c(cPG$stats[,"QALY"]+40.0, rep(NA, 14000)),
                     Treatment=c(rep("Genotyped",14000), rep("No Genotyping",14000)))
     ggplot(x, aes(Age, fill = Treatment)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
   })
   
   output$lifeExpect <- renderUI({
+    cPG <- results()[['cPG']]
+    
     fluidRow(
       "Life Expectancy : ",
       strong(as.character(round(cPG$boot$t0["Life"],1)+40)),
@@ -31,6 +53,7 @@ shinyServer(function(input, output)
   })
   
   output$qualAdjLifeExpectNoPG <- renderUI({
+    
     fluidRow(
       "Quality Adjusted Life Exp : ",
       strong("XX"),
@@ -55,6 +78,8 @@ shinyServer(function(input, output)
   })
   
   output$qualAdjLifeExpectPG <- renderUI({
+    cPG <- results()[['cPG']]
+    
     fluidRow(
       "Quality Adjusted Life Exp : ",
       strong(as.character(round(cPG$boot$t0['QALY'],1)+40)),
@@ -91,10 +116,9 @@ shinyServer(function(input, output)
     )
   })
   
-  # Counts
-  cnts <- table(aPG$resource)
-  
   output$deathCVDPG <- renderUI({
+    cnts <- results()[['cntsPG']]
+    
     fluidRow(
       "Deaths by a Cardiovascular Event : ",
       strong(as.character(cnts["cvd_death"]))
@@ -102,6 +126,7 @@ shinyServer(function(input, output)
   })
   
   output$stoppedTreatPG <- renderUI({
+    cnts <- results()[['cntsPG']]
     fluidRow(
       "Stopped Treatment : ",
       strong(as.character(cnts["stopped"]))
@@ -109,6 +134,7 @@ shinyServer(function(input, output)
   })
   
   output$switchTreatPG <- renderUI({
+    cnts <- results()[['cntsPG']]
     fluidRow(
       "Switched Treatment : ",
       strong(as.character(cnts["switched"]))
@@ -116,6 +142,7 @@ shinyServer(function(input, output)
   })
   
   output$mldMyoPG <- renderUI({
+    cnts <- results()[['cntsPG']]
     fluidRow(
       "Mild Myopathies : ",
       strong(as.character(cnts["mild_myopathy"]))
@@ -123,6 +150,7 @@ shinyServer(function(input, output)
   })
 
   output$modMyoPG <- renderUI({
+    cnts <- results()[['cntsPG']]
     fluidRow(
       "Moderate Myopathies : ",
       strong(as.character(cnts["mod_myopathy"]))
@@ -130,6 +158,7 @@ shinyServer(function(input, output)
   })
   
   output$sevMyoPG <- renderUI({
+    cnts <- results()[['cntsPG']]
     fluidRow(
       "Severe Myopathies : ",
       strong(as.character(cnts["sev_myopathy"]))
@@ -178,5 +207,5 @@ shinyServer(function(input, output)
       strong("X")
     )
   })
-  
+
 })
