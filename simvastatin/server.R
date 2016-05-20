@@ -8,6 +8,8 @@ deci <- function(x, k) format(round(x, k), nsmall=k)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output)
 {
+  N <- 1000
+  
   results <- reactive({
     inputs <- list(vAge = input$vAge,
                    vTX  = input$vTX,
@@ -19,24 +21,28 @@ shinyServer(function(input, output)
                    vCostPGx    = input$vCostPGx,
                    vPGx        = input$vPGx)
     
-    aPG <- simvastatin(inputs) 
+    aPG <- simvastatin(inputs, N) 
     cPG <- costs(aPG)
     
     # Counts
     cntsPG <- table(aPG$resource)
     
-    #  input$vPGx <- "None"
-    #  aNoPG <- simvastatin(input)
-    #  cNoPG <- costs(aNoPG)
-    
-    list(aPG=aPG,cPG=cPG,cntsPG=cntsPG)
+    inputs$vPGx <- "None"
+    aNoPG <- simvastatin(inputs, N)
+    cNoPG <- costs(aNoPG)
+    cntsNoPG <- table(aNoPG$resource)
+
+    list(aPG=aPG,cPG=cPG,cntsPG=cntsPG,
+         aNoPG=aNoPG,cNoPG=cNoPG,cntsNoPG=cntsNoPG)
   })
   
   output$lifeHist <- renderPlot({
-    cPG <- results()[['cPG']]
+    r <- results()
+    cPG <- r[['cPG']]
+    cNoPG <- r[['cNoPG']]
 
-    x <- data.frame(Age=c(cPG[,"QALY"], rep(NA, 14000)),
-                    Treatment=c(rep("Genotyped",14000), rep("No Genotyping",14000)))
+    x <- data.frame(Age=c(cPG$QALY, cNoPG$QALY),
+                    Treatment=c(rep("Genotyped",N), rep("No Genotyping",N)))
     ggplot(x, aes(Age, fill = Treatment)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
   })
   
