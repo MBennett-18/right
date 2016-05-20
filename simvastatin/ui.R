@@ -32,8 +32,11 @@ shinyUI(fluidPage(
 
     mainPanel(
       h2("Simulation Results"),
+      p("Numbers are given in ",tags$small("25%")," ", strong("50%")," ",tags$small("75%")," quantiles"),
       htmlOutput("lifeExpect"),
+      h2(""),
       plotOutput("lifeHist"),
+      p("Quality Adjusted Life In Sim Histogram"),
       
       h3("Costs"),
       splitLayout(

@@ -3,6 +3,8 @@ library(ggplot2)
 source("simvastatin.R")
 source("costs.R")
 
+deci <- function(x, k) format(round(x, k), nsmall=k)
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output)
 {
@@ -33,22 +35,20 @@ shinyServer(function(input, output)
   output$lifeHist <- renderPlot({
     cPG <- results()[['cPG']]
 
-    x <- data.frame(Age=c(cPG$stats[,"QALY"]+40.0, rep(NA, 14000)),
+    x <- data.frame(Age=c(cPG[,"QALY"], rep(NA, 14000)),
                     Treatment=c(rep("Genotyped",14000), rep("No Genotyping",14000)))
     ggplot(x, aes(Age, fill = Treatment)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
   })
   
   output$lifeExpect <- renderUI({
-    cPG <- results()[['cPG']]
+    stats <- results()[['cPG']]
+    quant <- quantile(stats[,"Life"])
     
     fluidRow(
-      "Life Expectancy : ",
-      strong(as.character(round(cPG$boot$t0["Life"],1)+40)),
-      tags$small(paste("(",
-        as.character(round(cPG$life95$basic[4],1)+40),
-        "-",
-        as.character(round(cPG$life95$basic[5],1)+40),
-        ")",sep=''))
+      "Time in Simulation Life Expectancy : ",
+      tags$small(deci(quant[2],1)),
+      strong(deci(quant[3],1)),
+      tags$small(deci(quant[4],1))
     )
   })
   
@@ -78,25 +78,26 @@ shinyServer(function(input, output)
   })
   
   output$qualAdjLifeExpectPG <- renderUI({
-    cPG <- results()[['cPG']]
+    stats <- results()[['cPG']]
+    quant <- quantile(stats[,"QALY"])
     
     fluidRow(
       "Quality Adjusted Life Exp : ",
-      strong(as.character(round(cPG$boot$t0['QALY'],1)+40)),
-      tags$small(paste("(",
-        as.character(round(cPG$qaly95$basic[4],1)+40),
-        "-",
-        as.character(round(cPG$qaly95$basic[5],1)+40),
-        ")",sep=''))
+      tags$small(deci(quant[2],1)),
+      strong(deci(quant[3],1)),
+      tags$small(deci(quant[4],1))
     )
   })
-
   
   output$totalCostsPG <- renderUI({
+    stats <- results()[['cPG']]
+    quant <- quantile(stats[,"Discounted Cost"])
+    
     fluidRow(
-      "Total Costs : $",
-      strong("43,482"),
-      tags$small("($41,200-$45,432)")
+      "Total Disc Costs : $",
+      tags$small(deci(quant[2],2)),
+      strong(deci(quant[3],2)),
+      tags$small(deci(quant[4],2))
     )
   })
   
