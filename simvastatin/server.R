@@ -8,7 +8,7 @@ deci <- function(x, k) format(round(x, k), nsmall=k)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output)
 {
-  N <- 1000
+  N <- 5000
   
   results <- reactive({
     inputs <- list(vAge = input$vAge,
@@ -59,27 +59,38 @@ shinyServer(function(input, output)
   })
   
   output$qualAdjLifeExpectNoPG <- renderUI({
+    stats <- results()[['cNoPG']]
+    quant <- quantile(stats$QALY)
     
     fluidRow(
       "Quality Adjusted Life Exp : ",
-      strong("XX"),
-      tags$small("(XX-XX)")
+      tags$small(deci(quant[2],1)),
+      strong(deci(quant[3],1)),
+      tags$small(deci(quant[4],1))
     )
   })
   
   output$totalCostsNoPG <- renderUI({
+    stats <- results()[['cNoPG']]
+    quant <- quantile(stats$Discount.Cost)
+    
     fluidRow(
-      "Total Costs : $",
-      strong("XX,XXX"),
-      tags$small("($XX,XXX-$XX,XXX)")
+      "Total Disc Costs : $",
+      tags$small(deci(quant[2],0)),
+      strong(deci(quant[3],0)),
+      tags$small(deci(quant[4],0))
     )
   })
   
   output$costEffectiveRatioNoPG <- renderUI({
+    stats <- results()[['cNoPG']]
+    quant <- quantile(stats$ce_ratio)
+    
     fluidRow(
-      "Cost Effectiveness Ratio : ",
-      strong("X.XX"),
-      tags$small("(X.XX-X.XX)")
+      "Cost Eff Ratio : ",
+      tags$small(deci(quant[2],1)),
+      strong(deci(quant[3],1)),
+      tags$small(deci(quant[4],1))
     )
   })
   
@@ -120,10 +131,16 @@ shinyServer(function(input, output)
   })
   
   output$ICER <- renderUI({
+    r <- results()
+    cPG   <- r[['cPG']]
+    cNoPG <- r[['cNoPG']]
+
+    icer <- (median(cNoPG$Discount.Cost) - median(cPG$Discount.Cost)) /
+            (median(cNoPG$QALY)          - median(cPG$QALY))
+    
     fluidRow(
       "ICER : ",
-      strong("X.XX"),
-      tags$small("(X.XX-X.XX)")
+      strong(deci(icer,2))
     )
   })
   
@@ -176,46 +193,52 @@ shinyServer(function(input, output)
     )
   })
   
-  
   output$deathCVDNoPG <- renderUI({
+    cnts <- results()[['cntsNoPG']]
+    
     fluidRow(
       "Deaths by a Cardiovascular Event : ",
-      strong("X")
-    )
-  })
-
-  output$mldMyoNoPG <- renderUI({
-    fluidRow(
-      "Mild Myopathies : ",
-      strong("X")
-    )
-  })
-  
-  output$modMyoNoPG <- renderUI({
-    fluidRow(
-      "Moderate Myopathies : ",
-      strong("X")
-    )
-  })
-  
-  output$sevMyoNoPG <- renderUI({
-    fluidRow(
-      "Severe Myopathies : ",
-      strong("X")
+      strong(as.character(cnts["cvd_death"]))
     )
   })
   
   output$stoppedTreatNoPG <- renderUI({
+    cnts <- results()[['cntsNoPG']]
     fluidRow(
-      "Stopped Treatement : ",
-      strong("X")
+      "Stopped Treatment : ",
+      strong(as.character(cnts["stopped"]))
     )
   })
   
   output$switchTreatNoPG <- renderUI({
+    cnts <- results()[['cntsNoPG']]
     fluidRow(
       "Switched Treatment : ",
-      strong("X")
+      strong(as.character(cnts["switched"]))
+    )
+  })
+  
+  output$mldMyoNoPG <- renderUI({
+    cnts <- results()[['cntsNoPG']]
+    fluidRow(
+      "Mild Myopathies : ",
+      strong(as.character(cnts["mild_myopathy"]))
+    )
+  })
+  
+  output$modMyoNoPG <- renderUI({
+    cnts <- results()[['cntsNoPG']]
+    fluidRow(
+      "Moderate Myopathies : ",
+      strong(as.character(cnts["mod_myopathy"]))
+    )
+  })
+  
+  output$sevMyoNoPG <- renderUI({
+    cnts <- results()[['cntsNoPG']]
+    fluidRow(
+      "Severe Myopathies : ",
+      strong(as.character(cnts["sev_myopathy"]))
     )
   })
 

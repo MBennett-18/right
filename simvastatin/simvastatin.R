@@ -182,10 +182,10 @@ assign_cvd_medication <- function(traj, inputs)
   branch(
     function() (is.na(inputs$vPGx) || inputs$vPG=="None")  + 1,
     merge=c(TRUE,TRUE),
-    create_trajectory() %>% timeout(0),
-    create_trajectory("Genotyped") %>% mark("genotyped")
+    create_trajectory("Genotyped") %>% mark("genotyped"),
+    create_trajectory() %>% timeout(0)
   ) %>%
-  branch(
+  branch( 
     function(attrs) {
       # No treatment at all
       if(!inputs$vTX) return(5)
@@ -205,16 +205,13 @@ assign_cvd_medication <- function(traj, inputs)
       seize("drug1"),
     create_trajectory("Atorvastin")   %>%
       set_attribute("CVDdrug", 2) %>%
-      seize("drug2") %>%
-      mark("switched"),
+      seize("drug2"),
     create_trajectory("Rosuvastatin") %>%
       set_attribute("CVDdrug", 3) %>%
-      seize("drug3") %>%
-      mark("switched"),
+      seize("drug3"),
     create_trajectory("Low/Moderate Dose Statin") %>%
       set_attribute("CVDdrug", 4) %>%
-      seize("drug4") %>%
-      mark("switched"),
+      seize("drug4"),
     create_trajectory("No Treatment") %>%
       set_attribute("CVDdrug", 0)
   )
