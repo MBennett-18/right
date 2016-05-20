@@ -6,7 +6,7 @@ source("costs.R")
 # Define server logic required to draw a histogram
 shinyServer(function(input, output)
 {
-  aPG   <- simvastatin(input)
+  aPG   <- reactive({ simvastatin(input) })
   cPG   <- costs(aPG)
 #  input$vPGx <- "None"
 #  aNoPG <- simvastatin(input)

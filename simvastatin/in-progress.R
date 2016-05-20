@@ -24,11 +24,15 @@ input <- list(
 )
 
 #arrivals <- simvastatin(inputs)
-#length(arrivals[arrivals$resource=="life",]$name)
 
 aPG   <- simvastatin(input)
 cPG   <- costs(aPG)
 
-#inputs$vPGx <- NA
-#aNoPG <- simvastatin(inputs)
-#cNoPG <- costs(aNoPG)
+length(aPG[aPG$resource=="life",]$name)
+
+
+input$vPGx <- NA
+aNoPG <- simvastatin(input)
+cNoPG <- costs(aNoPG)
+
+length(aNoPG[aNoPG$resource=="life",]$name)
