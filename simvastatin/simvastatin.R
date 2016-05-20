@@ -245,17 +245,6 @@ simvastatin <- function(inputs, N=14000)
 {
     env  <<- simmer("Simvastatin") %>% create_counters(counters)
 
-#    print("environment up, received command:")
-#    cat("vAge", inputs$vAge,"\n")
-#    cat("vTX", inputs$vTX,'\n')
-#    cat("vSecondLine", inputs$vSecondLine, '\n')
-#    cat("vCostDrug1", inputs$vCostDrug1,"\n")
-#    cat("vCostDrug2", inputs$vCostDrug2,"\n")
-#    cat("vCostDrug3", inputs$vCostDrug3,"\n")
-#    cat("vCostDrug4", inputs$vCostDrug4,"\n")
-#    cat("vCostPGx", inputs$vCostPGx,"\n")
-#    cat("vPGx", inputs$vPGx,"\n")
-    
     traj  <- simulation(env, inputs)
 
     env %>% add_generator("patient", traj, at(rep(0, N)), mon=2)

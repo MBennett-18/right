@@ -12,7 +12,7 @@ shinyServer(function(input, output)
   
   results <- reactive({
     inputs <- list(vAge = input$vAge,
-                   vTX  = input$vTX,
+                   vTX  = TRUE,
                    vSecondLine = input$vSecondLine,
                    vCostDrug1  = input$vCostDrug1,
                    vCostDrug2  = input$vCostDrug2,
@@ -135,8 +135,8 @@ shinyServer(function(input, output)
     cPG   <- r[['cPG']]
     cNoPG <- r[['cNoPG']]
 
-    icer <- (median(cNoPG$Discount.Cost) - median(cPG$Discount.Cost)) /
-            (median(cNoPG$QALY)          - median(cPG$QALY))
+    icer <- (mean(cPG$Discount.Cost) - mean(cNoPG$Discount.Cost)) /
+            (mean(cPG$QALY)          - mean(cNoPG$QALY))
     
     fluidRow(
       "ICER : ",
