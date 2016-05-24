@@ -152,7 +152,9 @@ assign_gender_and_age <- function(traj, inputs)
       set_attribute("gender", 2)                      %>%
       set_attribute("ageAtStart", function() inputs$vAge)
   ) %>%
-  set_attribute("age", function(attrs) attrs[['ageAtStart']])
+  set_attribute("age", function(attrs) attrs[['ageAtStart']]) %>%
+  set_attribute("totChol", function() rnorm(1, 228, 39)) %>% # From MRC/BHF Heart Study, Lancet 2002
+  set_attribute("hdlChol", function() rnorm(1, 40.9, 0.3861)) # Only recording entering value
 }
 
 assign_cvd_genotype <- function(traj, inputs)

@@ -23,8 +23,6 @@ input <- list(
   vPGx        = "Prospective"
 )
 
-#arrivals <- simvastatin(inputs)
-
 aPG   <- simvastatin(input)
 cPG   <- costs(aPG)
 

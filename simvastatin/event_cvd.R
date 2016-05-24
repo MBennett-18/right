@@ -15,6 +15,8 @@
 
 library(simmer)
 
+source('cvd_framingham.R')
+
 days_till_reassess_cvd <- function(attrs) { 3650.0 }
 
 reassess_cvd <- function(traj)
@@ -28,21 +30,29 @@ days_till_cvd <- function(attrs)
   drug       <- attrs[['CVDdrug']]
   gender     <- attrs[['gender']]
   age        <- attrs[['age']]
-  time_frame <- 3650
 
-  rr <- if(drug==4) {0.75} else
-        if(drug==0) {1}    else
-                    {0.65}
-  
-  so10   <- if(gender == 1) { 0.88936} else {0.95012}
-  beta   <- if(gender == 1) { 3.06117} else {2.32888}
-  center <- if(gender == 1) {11.88213} else {9.06833}
-  
-  risk <- log(age)*beta - center
+  # Pre-drug 
+  tot_chol   <- attrs[['totChol']]
+  hdl_chol   <- attrs[['hdlChol']]
 
-  rate <- -log(so10^exp(risk))*rr/time_frame
-  
-  rexp(1, rate)
+  if(drug==4)
+  {
+    # Just made this up. FIXME
+    tot_chol <- tot_chol - 36.3
+    hdl_chol <- hdl_chol + 0.5
+  } else if(drug!=0)
+  {
+    # Treatment values from Lance, 2002, MRC/BHF Heart Protection Study of chlesterol 
+    tot_chol <- tot_chol - 46.3
+    hdl_chol <- hdl_chol + 1.16
+  }
+
+  prob <- if(gender == 1)
+            cvd_prob_10_year_male_framingham(  age, tot_chol, hdl_chol)
+          else
+            cvd_prob_10_year_female_framingham(age, tot_chol, hdl_chol)
+
+  rexp(1, prob / 3650)
 }
 
 cvd <- function(traj)
