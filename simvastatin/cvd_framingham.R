@@ -32,9 +32,9 @@ cvd_prob_10_year_female_framingham <- Vectorize(function(
   smoker=1548/4522,
   diabetic=170/4522)
 {
-  data <- c(log(age), log(tot_chol), log(hdl_chol), 0, 0, smoker, diabetic)
-  data[4] <- (1-bp_treatment)*log(systolic_bp)
-  data[5] <- bp_treatment*log(systolic_bp)
+  data <- c(log(age), log(tot_chol), log(hdl_chol),
+            (1-bp_treatment)*log(systolic_bp),  bp_treatment*log(systolic_bp),
+            smoker, diabetic)
   
   lh <- sum(data * framingham_beta_f)
   
@@ -73,13 +73,13 @@ cvd_prob_10_year_male_framingham <- Vectorize(function(
   hdl_chol=44.9,
   systolic_bp=129.7, 
   bp_treatment=402/3969,
-  smoker=1298/3969,
+  smoker=1398/3969,
   diabetic=258/3969)
 {
-  data <- c(log(age), log(tot_chol), log(hdl_chol), 0, 0, smoker, diabetic)
-  data[4] <- (1-bp_treatment)*log(systolic_bp)
-  data[5] <- bp_treatment*log(systolic_bp)
-  
+  data <- c(log(age), log(tot_chol), log(hdl_chol),
+           (1-bp_treatment)*log(systolic_bp),  bp_treatment*log(systolic_bp),
+           smoker, diabetic)
+
   lh <- sum(data * framingham_beta_m)
 
   #1 - 0.88936^exp(lh - 23.9802) # Center from Appendix
