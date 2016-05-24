@@ -105,7 +105,7 @@ process_events <- function(traj, env)
   
   # Apply reactive events
   lapply(event_registry[sapply(event_registry, function(x) x$reactive)], FUN=function(e){
-    traj <- e$func(traj)
+    traj <- set_attribute(traj, e$attr, function(attrs) {now(env)+e$time_to_event(attrs)})
   })
   
   traj
