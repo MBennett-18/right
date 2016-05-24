@@ -184,5 +184,7 @@ sev_myopathy <- function(traj)
     merge = c(FALSE, TRUE),
     create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_death(),
     create_trajectory("Severe Myopathy")       %>% timeout(0)
-  )
+  ) %>%
+  mark("stopped") %>%
+  stop_treatment()
 }
