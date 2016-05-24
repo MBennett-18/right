@@ -84,7 +84,7 @@ process_events <- function(traj, env)
     event_time - now(env)
   })
   
-  # Age them by clock
+  # Age trajectory (patient) by clock
   traj <- set_attribute(traj,'age',function(attrs) attrs[['ageAtStart']]+(now(env)/365.0))
   
   # Create a handler for every possible event, using their
@@ -101,7 +101,14 @@ process_events <- function(traj, env)
   args$option <- function(attrs) next_event(attrs)$id
   args$merge  <- rep(TRUE,length(event_registry))
   
-  do.call(branch, args)
+  traj <- do.call(branch, args)
+  
+  # Apply reactive events
+  lapply(event_registry[sapply(event_registry, function(x) x$reactive)], FUN=function(e){
+    traj <- e$func(traj)
+  })
+  
+  traj
 }
 
   ##############################################

@@ -92,43 +92,52 @@ source('event_secular_death.R')
 source('event_myopathy.R')
 source('event_cvd.R')
 
-# Main event registry that is used by the event loop to create and track
-# event in a generic manner. Each has a:
-#   * name:          How you want it to appear in any printouts
-#   * attr:          How it will be stored in the patient (trajectory) attributes
-#   * time_to_event: a function given a list of attributes, returns in days
-#                    how long till the next event. NOTE: The variable in
-#                    must be named "attrs"
-#   * func:          a function that given a trajectory, modifies it and
-#                    returns the modified trajectory.
-#
+  #################################################################################
+ #
+#' Main event registry that is used by the event loop to create and track
+#' events in a generic manner.
+#'
+#' @param name          How it will appear in printouts
+#' @param attr          The trajectory attribute storing time to next event
+#' @param time_to_event A function that given a list of attributes, returns in days
+#'                      how long till the next event. NOTE: The variable in
+#'                      must be named "attrs"
+#' @param func          A function that given a trajectory, modifies it for an
+#'                      event's occurrance.
+#' @param reactive      Redraw the time_to_event if another event has triggered.
+#' @export
 event_registry <- list(
   list(name          = "Secular Death",
        attr          = "eSecularTime",
        time_to_event = days_till_death,
-       func          = secular_death),
+       func          = secular_death,
+       reactive      = FALSE),
   list(name          = "Mild Myopathy",
        attr          = "eMildMyoTime",
        time_to_event = days_till_mild_myopathy,
-       func          = mild_myopathy),
+       func          = mild_myopathy,
+       reactive      = FALSE),
   list(name          = "Moderate Myopathy",
        attr          = "eModMyoTime",
        time_to_event = days_till_mod_myopathy,
-       func          = mod_myopathy),
+       func          = mod_myopathy,
+       reactive      = FALSE),
   list(name          = "Severe Myopathy",
        attr          = "eSevMyoTime",
        time_to_event = days_till_sev_myopathy,
-       func          = sev_myopathy),
+       func          = sev_myopathy,
+       reactive      = FALSE),
   list(name          = "Cardiovascular Disease",
        attr          = "eCVDTime",
        time_to_event = days_till_cvd,
-       func          = cvd),
+       func          = cvd,
+       reactive      = TRUE),
   list(name          = "Reassess CVD Risk",
        attr          = "eCVDReassess",
        time_to_event = days_till_reassess_cvd,
-       func          = reassess_cvd)
+       func          = reassess_cvd,
+       reactive      = FALSE)
 )
-
 
   #################################################
  ##
