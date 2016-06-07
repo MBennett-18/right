@@ -271,7 +271,7 @@ simvastatin <- function(inputs, N=14000)
   
     # 30 day events
     events_to_fix_end <- c("mod_myopathy","sev_myopathy", "cvd")
-    arrivals[arrivals$resource %in% events_to_fix_end,]$end_time <- arrivals[arrivals$resource %in% events_to_fix_end,]$start_time + 1.0
+    arrivals[arrivals$resource %in% events_to_fix_end,]$end_time <- arrivals[arrivals$resource %in% events_to_fix_end,]$start_time + 30.0
   
     # Compute total activity times
     arrivals$activity_time <- arrivals$end_time - arrivals$start_time
