@@ -11,15 +11,17 @@ shinyServer(function(input, output)
   N <- 5000
   
   results <- reactive({
-    inputs <- list(vAge = input$vAge,
-                   vTX  = TRUE,
-                   vSecondLine = input$vSecondLine,
-                   vCostDrug1  = input$vCostDrug1,
-                   vCostDrug2  = input$vCostDrug2,
-                   vCostDrug3  = input$vCostDrug3,
-                   vCostDrug4  = input$vCostDrug4,
-                   vCostPGx    = input$vCostPGx,
-                   vPGx        = input$vPGx)
+    inputs <- list(
+      vAge        = 40,
+      vTX         = TRUE,
+      vSecondLine = "Atorvastin",
+      vCostDrug1  = 147,
+      vCostDrug2  = 173.1,
+      vCostDrug3  = 259.2,
+      vCostDrug4  = 143.7,
+      vCostPGx    = 250,
+      vPGx        = "Prospective"
+    )
     
     aPG <- simvastatin(inputs, N) 
     cPG <- costs(aPG)
