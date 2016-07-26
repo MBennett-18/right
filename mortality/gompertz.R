@@ -50,13 +50,13 @@ for(age in 0:109)
   surv.model <- flexsurvreg(surv.data ~ 1, dist="gompertz")
 
   parameters$male.shape[age+1] <- surv.model$coefficients[1]
-  parameters$male.rate[age+1] <- surv.model$coefficients[2]
+  parameters$male.rate[age+1] <- exp(surv.model$coefficients[2])
   
   surv.data <- with(deaths.female.long[deaths.female.long$Age >= age,], Surv(Age, Death, origin=age))
   surv.model <- flexsurvreg(surv.data ~ 1, dist="gompertz")
   
   parameters$female.shape[age+1] <- surv.model$coefficients[1]
-  parameters$female.rate[age+1] <- surv.model$coefficients[2]
+  parameters$female.rate[age+1] <- exp(surv.model$coefficients[2])
 }
 
 parameters <- parameters[1:110,]
@@ -66,5 +66,5 @@ write.csv(parameters, "gompertz-mortality.csv", row.names=FALSE)
 #  Let's check the post 40 fit.
 surv.data <- deaths.male.long[deaths.male.long$Age >= 40,]
 
-hist(surv.data$Age+40, freq=FALSE, main="Census Data from 2010", xlab="Male Deaths After 40")
-curve(dgompertz(x-40, 8.96e-2, 1.74e-3) , add=TRUE, col='red')
+hist(surv.data$Age, freq=FALSE, main="Census Data from 2010", xlab="Male Deaths Starting at 40", breaks=20)
+curve(dgompertz(x-40, parameters$male.shape[41], parameters$male.rate[41]) , add=TRUE, col='red')
