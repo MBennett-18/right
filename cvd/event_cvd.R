@@ -26,25 +26,11 @@ reassess_cvd <- function(traj)
 
 days_till_cvd <- function(attrs)
 {
-  drug       <- attrs[['CVDdrug']]
   gender     <- attrs[['gender']]
   age        <- attrs[['age']]
 
-  # Pre-drug 
   tot_chol   <- attrs[['totChol']]
   hdl_chol   <- attrs[['hdlChol']]
-
-  if(drug==4)
-  {
-    # Just made this up. FIXME
-    tot_chol <- tot_chol - 36.3
-    hdl_chol <- hdl_chol + 0.5
-  } else if(drug!=0)
-  {
-    # Treatment values from Lance, 2002, MRC/BHF Heart Protection Study of chlesterol 
-    tot_chol <- tot_chol - 46.3
-    hdl_chol <- hdl_chol + 1.16
-  }
 
   prob <- if(gender == 1)
             cvd_prob_10_year_male_framingham(  age, tot_chol, hdl_chol)

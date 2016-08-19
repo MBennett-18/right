@@ -182,7 +182,9 @@ sev_myopathy <- function(traj)
   branch(
     function() sample(1:2, 1, prob=c(0.1, 0.9)),
     merge = c(FALSE, TRUE),
-    create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup_on_death(),
+    create_trajectory("Severe Myopathy Death") %>% mark("rahbdo_death") %>% cleanup(),
     create_trajectory("Severe Myopathy")       %>% timeout(0)
-  )
+  ) %>%
+  mark("stopped") %>%
+  stop_treatment()
 }
