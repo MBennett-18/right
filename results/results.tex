@@ -1,0 +1,61 @@
+\documentclass{article}
+
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{fullpage}
+\usepackage{graphicx,float,wrapfig}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage{setspace}
+\usepackage{Tabbing}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{extramarks}
+\usepackage{chngpage}
+\usepackage{soul,color}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{tabu}
+\usepackage{booktabs}
+
+\begin{document}
+
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+
+\section{Simvastatin Results}
+
+
+
+\begin{table*}\centering
+\ra{1.1}
+\begin{tabular}{@{}lrrrrrrrrrr@{}}\toprule
+  \textsc{Preemptive:} &
+  \multicolumn{2}{c}{None }      & \phantom{a} &
+  \multicolumn{1}{c}{Panel}      & \phantom{a} &
+  \multicolumn{2}{c}{PREDICT}    & \phantom{a} &
+  \multicolumn{2}{c}{$Age >= 50$} \\
+
+\cmidrule{2-3} \cmidrule{5-5} \cmidrule{7-8} \cmidrule{10-11}
+& None & Reactive && None && None & Reactive && None & Reactive \\
+
+\midrule
+
+$N$ & 100,000 & 100,000 && 100,000 && 100,000 & 100,000 && 100,000 & 100,000 \\
+Secular Death & 24,888 & 24,895 && 24,883 && 24,886 & 24,886 && 24,879 & 24,890 \\
+Statin Therapy & 16,746 & 16,746 && 16,746 && 16,746 & 16,746 && 16,746 & 16,746 \\
+Simvastatin & 16,746 & 15,566 && 12,152 && 12,421 & 12,348 && 13,244 & 12,984 \\
+Alternate Statin & 554 & 1,663 && 4,873 && 4,618 & 4,682 && 3,875 & 4,092 \\
+Switch to Alt & 554 & 483 && 279 && 293 & 284 && 373 & 330 \\
+Halt Statin & 177 & 169 && 118 && 132 & 127 && 126 & 132 \\
+CVD & 1,479 & 1,466 && 1,477 && 1,492 & 1,546 && 1,454 & 1,523 \\
+CVD Death & 189 & 170 && 178 && 166 & 179 && 183 & 168 \\
+Mild Myopathy & 728 & 671 && 486 && 504 & 504 && 561 & 554 \\
+Moderate Myopathy & 2 & 0 && 0 && 3 & 3 && 0 & 1 \\
+Severe Myopathy & 1 & 1 && 1 && 1 & 0 && 1 & 1 \\
+\bottomrule
+\end{tabular}
+\caption{Simulation Counts for Simvastatin}
+\end{table*}
+
+
+
+\end{document}
