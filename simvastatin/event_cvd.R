@@ -51,6 +51,8 @@ days_till_cvd <- function(attrs)
           else
             cvd_prob_10_year_female_framingham(age, tot_chol, hdl_chol)
 
+  if(attrs[['aStatinRxHx']] == 0) return(365.0*100) # Drop those never prescribed statins out of study population
+  
   rexp(1, prob / 3650)
 }
 

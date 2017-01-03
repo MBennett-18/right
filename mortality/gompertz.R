@@ -68,3 +68,9 @@ surv.data <- deaths.male.long[deaths.male.long$Age >= 40,]
 
 hist(surv.data$Age, freq=FALSE, main="Census Data from 2010", xlab="Male Deaths Starting at 40", breaks=20)
 curve(dgompertz(x-40, parameters$male.shape[41], parameters$male.rate[41]) , add=TRUE, col='red')
+
+#  Let's check the post 90 fit.
+surv.data <- deaths.male.long[deaths.male.long$Age >= 90,]
+
+hist(surv.data$Age, freq=FALSE, main="Census Data from 2010", xlab="Male Deaths Starting at 90", breaks=20)
+curve(dgompertz(x-90, parameters$male.shape[91], parameters$male.rate[91]) , add=TRUE, col='red')

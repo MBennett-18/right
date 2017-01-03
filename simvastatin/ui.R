@@ -3,8 +3,8 @@ library(shiny)
 
 parameterInput <- function(inputId, label, value, min=NA, max=NA, step=NA, width=NULL)
 {
-  fluidRow(column(width=7, HTML(label)),
-           column(width=5, numericInput(inputId, NA, value, min, max, step)))
+  fluidRow(column(width=5, HTML(label)),
+           column(width=7, numericInput(inputId, NA, value, min, max, step)))
   #parameterInput(inputId, label, value, min, max, step, "60%")
 }
 
@@ -14,14 +14,14 @@ shinyUI(fluidPage(
   titlePanel("Cost Effectiveness of Pharmacogenomic Testing for Simvastatin"),
   p("A discrete event simulation model for evaluation of clinical benefit and costs-effectiveness of utilizing pharmacogenomic testing in Simvastatin treatement"),
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(width=6,
         submitButton("Run Simulation"),
         h3("Parameters"),
         tabsetPanel(type="tabs",
           tabPanel(
               "Population",
                selectInput("vN", "Simulated Patients",
-                                  c("1000", "10,000", "100,000"),
+                                  c("1000", "10,000", "50,000", "100,000"),
                                   "10,000", FALSE),
                p("Patient's starting age is drawn from a uniform distribuion"),
                parameterInput("vLowerAge", "Lowest Age", min=20, max=80, value=40, step=1),
@@ -42,68 +42,72 @@ shinyUI(fluidPage(
                       selected= c("Simvastatin (slco1b1)",
                                   "Warfarin (vkorc1, cyp2c9)",
                                   "Cloidogrel (cyp2c19)")),
-          parameterInput("vPREDICTsens", "PREDICT Sensitivity", min=0, max=1, value=0.05, step=0.01),
-          parameterInput("vPREDICTspec", "PREDICT Specificity", min=0, max=1, value=0.05, step=0.01)
+          parameterInput("vPREDICTsens", "PREDICT Sensitivity", min=0, max=1, value=0.3, step=0.01),
+          parameterInput("vPREDICTspec", "PREDICT Specificity", min=0, max=1, value=0.3, step=0.01)
         ),
         tabPanel(
           "Genetics",
+          h3("Phenotypic Prevalence"),
           h4("Clopidogrel"),
-          parameterInput("vClopidogrelMedRisk",  "Med Adverse Risk %",  0.23, 0, 1, 0.001),
-          parameterInput("vClopidogrelHighRisk", "High Adverse Risk %", 0.23, 0, 1, 0.001),
+          parameterInput("vClopidogrelMedMet",  "Med Metabolizers %",  0.23, 0, 1, 0.001),
+          parameterInput("vClopidogrelPoorMet", "Poor Metabolizers %", 0.23, 0, 1, 0.001),
           h4("Simvastatin"),
-          parameterInput("vSimvastatinMedRisk",  "Med Adverse Risk %",  0.23, 0, 1, 0.001),
-          parameterInput("vSimvastatinHighRisk", "High Adverse Risk %", 0.23, 0, 1, 0.001),
+          parameterInput("vSimvastatinMedMet",  "Med Metabolizers %",  0.249, 0, 1, 0.001),
+          parameterInput("vSimvastatinPoorMet", "Poor Metabolizers %", 0.021, 0, 1, 0.001),
           h4("Warfarin"),
-          parameterInput("vWarfarinMedRisk",     "Med Adverse Risk %",  0.23, 0, 1, 0.001),
-          parameterInput("vWarfarinHighRisk",    "High Adverse Risk %", 0.23, 0, 1, 0.001)
+          parameterInput("vWarfarinMedMet",     "Med Metabolizers %",  0.23, 0, 1, 0.001),
+          parameterInput("vWarfarinPoorMet",    "Poor Metabolizers %", 0.23, 0, 1, 0.001)
         ),
         tabPanel(
           "Simvastatin",
+        
+          h3("Physician Behavior"),
+            
+          parameterInput("vProbSimvastatinAlt", "Prob. of Alt | Variant", 1.00, 0, 1, 0.001),
+          parameterInput("vProbSimStopMild","Prob. of Stop | Mild Myo",   0.23, 0, 1, 0.001),
+          parameterInput("vProbSimStopMod", "Prob. of Stop | Mod Myo",    0.23, 0, 1, 0.001),
+          parameterInput("vProbSimStopSev", "Prob. of Stop | Sev Myo",    1.00, 0, 1, 0.001),
+          
+          p(em("Note: Events greater than a year are dropped from simulation.")),
+          p(em("Med and Poor refer to phenotypic metabolizer status.")),
 
           h3("Mild Myopathy"),
-          h4("Base Risk"),
-          parameterInput("vMildMyoBaseNoVar",   "Low Adverse",    0.5, 0, 10, 0.001),
-          parameterInput("vMildMyoBaseMedVar",  "Medium Adverse", 0.5, 0, 10, 0.001),
-          parameterInput("vMildMyoBaseHighVar", "High Adverse",   0.5, 0, 10, 0.001),
-          h4("Simvastatin Relative Risk"),
-          parameterInput("vMildMyoDrugNoVar",   "Low Adverse",    0.5, 0, 10, 0.001),
-          parameterInput("vMildMyoDrugMedVar",  "Medium Adverse", 0.5, 0, 10, 0.001),
-          parameterInput("vMildMyoDrugHighVar", "High Adverse",   0.5, 0, 10, 0.001),
-          h4("Alternate Relative Risk"),
-          parameterInput("vMildMyoAltNoVar",    "Low Adverse",    0.5, 0, 10, 0.001),
-          parameterInput("vMildMyoAltMedVar",   "Medium Adverse", 0.5, 0, 10, 0.001),
-          parameterInput("vMildMyoAltHighVar",  "High Adverse",   0.5, 0, 10, 0.001),
+          h4("No Drug Risk"),
+          parameterInput("vMildMyoBaseNoVar",  "Baseline Risk", 1e-7,    0, 100, 0.001),
+          
+          h4("Simvastatin Risk"),
+          parameterInput("vMildMyoSimNoVar",   "Baseline Risk", 0.05,    0, 100, 0.001),
+          parameterInput("vMildMyoSimMedVar",  "Rel Risk|Med",  1,       0, 100, 0.001),
+          parameterInput("vMildMyoSimPoorVar", "Rel Risk|Poor", 1,       0, 100, 0.001),
+          h4("Alternate Risk"),
+          parameterInput("vMildMyoAltNoVar",   "Baseline Risk", 0.05,    0, 100, 0.001),
+          parameterInput("vMildMyoAltMedVar",  "Rel Risk|Med",  1,       0, 100, 0.001),
+          parameterInput("vMildMyoAltPoorVar", "Rel Risk|Poor", 1,       0, 100, 0.001),
 
           h3("Moderate Myopathy"),
-          h4("Base Risk"),
-          parameterInput("vModMyoBaseNoVar",   "Low Adverse",     0.5, 0, 10, 0.001),
-          parameterInput("vModMyoBaseMedVar",  "Medium Adverse",  0.5, 0, 10, 0.001),
-          parameterInput("vModMyoBaseHighVar", "High Adverse",    0.5, 0, 10, 0.001),
-          h4("Simvastatin Relative Risk"),
-          parameterInput("vModMyoDrugNoVar",   "Low Adverse",     0.5, 0, 10, 0.001),
-          parameterInput("vModMyoDrugMedVar",  "Medium Adverse",  0.5, 0, 10, 0.001),
-          parameterInput("vModMyoDrugHighVar", "High Adverse",    0.5, 0, 10, 0.001),
-          h4("Alternate Relative Risk"),
-          parameterInput("vModMyoAltNoVar",    "Low Adverse",     0.5, 0, 10, 0.001),
-          parameterInput("vModMyoAltMedVar",   "Medium Adverse",  0.5, 0, 10, 0.001),
-          parameterInput("vModMyoAltHighVar",  "High Adverse",    0.5, 0, 10, 0.001),
+          h4("No Drug Risk"),
+          parameterInput("vModMyoBaseNoVar",   "Baseline Risk",  1e-10,   0, 100, 0.001),
+          h4("Simvastatin Risk"),
+          parameterInput("vModMyoSimNoVar",    "Baseline Risk",  0.00011, 0, 100, 0.001),
+          parameterInput("vModMyoSimMedVar",   "Rel Risk|Med",   2.55,    0, 100, 0.001),
+          parameterInput("vModMyoSimPoorVar",  "Rel Risk|Poor",  9.56,    0, 100, 0.001),
+          h4("Alternate Risk"),
+          parameterInput("vModMyoAltNoVar",    "Baseline Risk",  0.00011, 0, 100, 0.001),
+          parameterInput("vModMyoAltMedVar",   "Rel Risk|Med",   1.08,    0, 100, 0.001),
+          parameterInput("vModMyoAltPoorVar",  "Rel Risk|Poor",  4.05,    0, 100, 0.001),
 
           h3("Severe Myopathy"),
-          h4("Base Risk"),
-          parameterInput("vSevMyoBaseNoVar",   "Low Adverse",     0.5, 0, 10, 0.001),
-          parameterInput("vSevMyoBaseMedVar",  "Medium Adverse",  0.5, 0, 10, 0.001),
-          parameterInput("vSevMyoBaseHighVar", "High Adverse",    0.5, 0, 10, 0.001),
-          h4("Simvastatin Relative Risk"),
-          parameterInput("vSevMyoDrugNoVar",   "Low Adverse",     0.5, 0, 10, 0.001),
-          parameterInput("vSevMyoDrugMedVar",  "Medium Adverse",  0.5, 0, 10, 0.001),
-          parameterInput("vSevMyoDrugHighVar", "High Adverse",    0.5, 0, 10, 0.001),
-          h4("Alternate Relative Risk"),
-          parameterInput("vSevMyoAltNoVar",   "Low Adverse",      0.5, 0, 10, 0.001),
-          parameterInput("vSevMyoAltMedVar",  "Medium Adverse",   0.5, 0, 10, 0.001),
-          parameterInput("vSevMyoAltHighVar", "High Adverse",     0.5, 0, 10, 0.001)
+          h4("No Drug Risk"),
+          parameterInput("vSevMyoBaseNoVar",   "Baseline Risk",  1e-16,   0, 100, 0.001),
+          h4("Simvastatin Risk"),
+          parameterInput("vSevMyoSimNoVar",    "Baseline Risk",  0.000034,0, 100, 0.001),
+          parameterInput("vSevMyoSimMedVar",   "Rel Risk|Med",   2.55,    0, 100, 0.001),
+          parameterInput("vSevMyoSimPoorVar",  "Rel Risk|Poor",  9.56,    0, 100, 0.001),
+          h4("Alternate Risk"),
+          parameterInput("vSevMyoAltNoVar",    "Baseline Risk",  0.000034,0, 100, 0.001),
+          parameterInput("vSevMyoAltMedVar",   "Rel Risk|Med",   1.08,    0, 100, 0.001),
+          parameterInput("vSevMyoAltPoorVar",  "Rel Risk|Poor",  4.05,    0, 100, 0.001)
 
-# Switching strategy ???
-          
         ),
 
         tabPanel(
@@ -116,7 +120,7 @@ shinyUI(fluidPage(
         )
     )),
 
-    mainPanel(
+    mainPanel(width=6,
       h2("Simulation Results"),
       p("Numbers are given in ",tags$small("25%")," ", strong("50%")," ",tags$small("75%")," quantiles"),
       htmlOutput("lifeExpect"),
